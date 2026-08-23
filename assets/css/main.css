@@ -3,6 +3,14 @@
     --primary-text-color: white;
     --primary-link-color: #1a73e8;
     --primary-font-family: arial;
+    --text-dim: #9099a6;
+    --max-wid: 1070px
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
 html, body {
@@ -18,61 +26,46 @@ a {
     text-decoration: none;
 }
 
-#Top-Bar {
-    background: yellow;
-}
-
-#Site-Container {
-    width: 100%;
-    max-width: 1070px;
+.wrap {
+    max-width: var(--max-wid);
     margin: 0 auto;
+    padding: 0 28px;
 }
 
-nav#Site-Navigation ul {
-    padding: 0;
-    
+nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 0;
 }
 
-nav#Site-Navigation ul li {
-    list-style-type: none;
-    display: inline-block;
-    font-size: 18px;
-    padding: 15px;s
-}
-
-
-#Sidbar-Container {
-    background: green;
-    width: 30%;
-    text-align: center;
-    padding-top: 1em;
-    position: relative;
-}
-
-.Profile-Sidebar img {
-    width: 100%;
-    max-width: 150px;
-    height: 100%;
-    border-radius: 50%;
-}
-
-#Content-Container {
-    background: red;
-    width: 70%;
-}
-
-nav.My-Linktree li {
-    list-style-type: none;
-}
-
-nav.My-Linktree a {
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    font-family: var(--primary-font-family);
+    font-weight: 600;
+    font-size: 16px;
     color: white;
 }
 
-nav.My-Linktree a:hover {
-    color: white;
-    text-decoration: underline;
+.nav-link {
+    display: flex;
+    align-items: center;
+    gap:32px;
 }
+
+.nav-link a {
+    font-size: 14.5px;
+    color: var(--text-dim);
+    transition: color .15s ease;
+}
+
+.nav-link a:hover {
+    color: white;
+}
+
+
 
 footer {
     background: blue;
