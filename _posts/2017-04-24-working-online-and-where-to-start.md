@@ -1,0 +1,21 @@
+---
+layout: post
+title: "Working Online and Where To Start"
+date: 2017-04-24
+permalink: "/blog/working-online-and-where-to-start/"
+author: Benjamin Sanders
+catagories: working,online
+---
+Now I have tried many different opportunities for working from home to no avail. However, this one finally worked or at least is working for now. I mean we never know what could happen tomorrow but either way, I am loving the freedom the job provides.
+
+It's not easy money either, you still have to work for it. How it works is you claim projects, type out exactly what you hear the best you can and submit them. Most of the time the audio can be a bit tricky to hear but I think that's the most rewarding part of it. I mean, imagine this, you are working on some audio and you finally are able to make out something. Would you feel a sense of satisfaction from that?
+
+I am of course talking about working with Rev, the transcription company. Which so far has been a great work-from-home opportunity. As mentioned above it is not easy money but I can pick when and where I want to work. There is no set schedule and I get to work whenever I need money really.
+
+There are a lot of ways to make money online though nowadays. You can set up an Etsy shop, you can sell your illustrations or maybe stream and people can donate to you. Though that last one is maybe more related if you have an already established brand and people feel they know you.
+
+Working from home is essentially you running your own business. So, if you treat it like you're a business owner that you are then find something that you love doing.
+
+I would say the best way to make money online is to find something you would do for free and charge for it. The idea being that if it's something you'd be doing for free you are probably good at it. At least good enough to garner some sort of eyeballs on it.
+
+All this being said to leave off this post I would like to say I am planning on starting a podcast. I am not quite sure yet on the title but I have been wanting to do a podcast for a while. So keep an eye on my twitter for more information on it.

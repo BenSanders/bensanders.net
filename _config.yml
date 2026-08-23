@@ -1,0 +1,17 @@
+# Site Settings
+timezone: America/New_York
+baseurl: "" # the subpath of your site, e.g /blog
+title: Ben Sanders
+email: hello@bensander.net
+description: > # this means to ignore newlines until "baseurl:"
+  Ben Sanders is an all-around Geek and loves to write about the latest technology/gaming news. If you want a personal take on technology and gaming news come have a read
+url: "https://bensanders.net"
+twitter_username: thebensanders
+github_username: bensanders
+facebook_username: basanders
+linkedin_username: basanders
+
+# Build settings
+markdown: kramdown
+plugins: 
+  - jekyll-feed

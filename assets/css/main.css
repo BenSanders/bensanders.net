@@ -1,0 +1,82 @@
+:root {
+    --primary-bg-color: #0f1700;
+    --primary-text-color: white;
+    --primary-link-color: #1a73e8;
+    --primary-font-family: arial;
+}
+
+html, body {
+    background-color: var(--primary-bg-color);
+    color: var(--primary-text-color);
+    font-family: var(--primary-font-family);
+    margin: 0 auto;
+    padding: 0;
+}
+
+a {
+    color: var(--primary-link-color);
+    text-decoration: none;
+}
+
+#Top-Bar {
+    background: yellow;
+}
+
+#Site-Container {
+    width: 100%;
+    max-width: 1070px;
+    margin: 0 auto;
+}
+
+nav#Site-Navigation ul {
+    padding: 0;
+    
+}
+
+nav#Site-Navigation ul li {
+    list-style-type: none;
+    display: inline-block;
+    font-size: 18px;
+    padding: 15px;s
+}
+
+
+#Sidbar-Container {
+    background: green;
+    width: 30%;
+    text-align: center;
+    padding-top: 1em;
+    position: relative;
+}
+
+.Profile-Sidebar img {
+    width: 100%;
+    max-width: 150px;
+    height: 100%;
+    border-radius: 50%;
+}
+
+#Content-Container {
+    background: red;
+    width: 70%;
+}
+
+nav.My-Linktree li {
+    list-style-type: none;
+}
+
+nav.My-Linktree a {
+    color: white;
+}
+
+nav.My-Linktree a:hover {
+    color: white;
+    text-decoration: underline;
+}
+
+footer {
+    background: blue;
+    width: 100%;
+    max-width: 1070px;
+    margin: 0 auto;
+}
