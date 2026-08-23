@@ -65,7 +65,57 @@ nav {
     color: white;
 }
 
+.linktree {
+    padding: 88px 0 96px;
+}
 
+.linktree-grid {
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    align-items: center;
+}
+
+.profile img {
+    width: 250px;
+    border-radius: 50%;
+}
+
+.profile {
+    text-align: center;;
+}
+
+.linktree-nav {
+  display: grid;
+  text-align: left;
+}
+
+.linktree-nav a {
+    color: var(--text-dim);
+    transition: color .15s ease;
+}
+
+.linktree a:hover { color: white; }
+
+.link-container {
+    display: flex;
+    flex-wrap: wrap;
+}
+
+.links {
+    flex: 1 0 21%; /* explanation below */
+    margin: 5px;
+    height: 100px;
+}
+
+
+.links ul {
+    padding: 0;
+    margin: 0;
+}
+
+.links ul li {
+    list-style-type: none;
+}
 
 footer {
     background: blue;
