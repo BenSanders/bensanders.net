@@ -26,6 +26,10 @@ a {
     text-decoration: none;
 }
 
+h2, h3 {
+  padding: 0.5em 0 1em 0;
+}
+
 .wrap {
     max-width: var(--max-wid);
     margin: 0 auto;
@@ -115,6 +119,16 @@ nav {
 
 .links ul li {
     list-style-type: none;
+}
+
+.about-grid {
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+}
+
+.gear-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
 }
 
 footer {
