@@ -1,23 +1,5 @@
-<!DOCTYPE html>
-<html lang="en">
 {% include head.html %}
-<body>
-    <main>
-        <header>
-            <div class="wrap">
-                <nav>
-                    <a class="logo" href="/"><h1>Ben Sanders</h1></a>
-                    <div class="nav-link">
-                        <a href="">Home</a>
-                        <a href="#about">About</a>
-                        <a href="#gear">Gear</a>
-                        <a href="#blog">Blog</a>
-                        <a href="#photos">Photos</a>
-                        <a href="#donate">Donate</a>
-                    </div>
-                </nav>
-            </div>
-        </header>
+{% include header.html %}
         <section id="about">
             <div class="wrap about-grid">
                 <div class="profile">
@@ -75,41 +57,30 @@
         </section>
         <section id="blog">
             <div class="wrap">
-                <article>
-                    <h2>Article Title</h2>
-                    <p>
-                        Lorem ipsum dolor sit amet consectetur adipisicing elit. Saepe dolorum repellat ea consequuntur eum itaque accusamus sapiente assumenda eveniet. Doloribus fuga voluptate facere atque repellat nisi facilis a, eveniet esse!
-                    </p>
-                </article>
-                <article>
-                    <h2>Article Title</h2>
-                    <p>
-                        Lorem ipsum dolor sit amet consectetur adipisicing elit. Saepe dolorum repellat ea consequuntur eum itaque accusamus sapiente assumenda eveniet. Doloribus fuga voluptate facere atque repellat nisi facilis a, eveniet esse!
-                    </p>
-                </article>
-                <article>
-                    <h2>Article Title</h2>
-                    <p>
-                        Lorem ipsum dolor sit amet consectetur adipisicing elit. Saepe dolorum repellat ea consequuntur eum itaque accusamus sapiente assumenda eveniet. Doloribus fuga voluptate facere atque repellat nisi facilis a, eveniet esse!
-                    </p>
-                </article>
-                <article>
-                    <h2>Article Title</h2>
-                    <p>
-                        Lorem ipsum dolor sit amet consectetur adipisicing elit. Saepe dolorum repellat ea consequuntur eum itaque accusamus sapiente assumenda eveniet. Doloribus fuga voluptate facere atque repellat nisi facilis a, eveniet esse!
-                    </p>
-                </article>
-                <article>
-                    <h2>Article Title</h2>
-                    <p>
-                        Lorem ipsum dolor sit amet consectetur adipisicing elit. Saepe dolorum repellat ea consequuntur eum itaque accusamus sapiente assumenda eveniet. Doloribus fuga voluptate facere atque repellat nisi facilis a, eveniet esse!
-                    </p>
-                </article>
+                <h2>Blog</h2>
+                <ul>
+                    {% for post in site.posts %}
+                        <li>
+                            <a href="{{ post.url }}">{{ post.title }}</a>
+                        </li>
+                    {% endfor %}
+                </ul>
             </div>
         </section>
-    </main>
-    <footer>
-        &copy; Ben Sanders, 2026
-    </footer>
-</body>
-</html>
+        <section id="photos">
+            <div class="wrap photos-grid">
+                <h2>Photos</h2>
+                <p>Section Coming soon:tm:</p>
+            </div>
+        </section>
+        <section id="donate">
+            <div class="wrap donate-grid">
+                <h2>Donate</h2>
+                <p>
+                    If I have ever spoke with your online and helped you in a way that made you want to donate to me.
+                    First off, thank you and secondly I have a few places you throw a few bucks my way.
+                </p>
+                <a href="https://www.paypal.com/paypalme/thebensanders">PayPal Me</a>
+            </div>
+        </section>
+{% include footer.html %}

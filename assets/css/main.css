@@ -131,8 +131,11 @@ nav {
     grid-template-columns: 1fr 1fr 1fr;
 }
 
+.wrap.article-grid p {
+  padding: 1em 0 1em 0;
+}
+
 footer {
-    background: blue;
     width: 100%;
     max-width: 1070px;
     margin: 0 auto;
