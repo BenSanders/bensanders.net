@@ -30,6 +30,11 @@ h2, h3 {
   padding: 0.5em 0 1em 0;
 }
 
+.container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
 .wrap {
     max-width: var(--max-wid);
     margin: 0 auto;
@@ -122,8 +127,8 @@ nav {
 }
 
 .about-grid {
-    display: grid;
-    grid-template-columns: 1.05fr 0.95fr;
+    /* display: grid;
+    grid-template-columns: 1.05fr 0.95fr; */
 }
 
 .gear-grid {
