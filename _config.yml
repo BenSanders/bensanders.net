@@ -15,3 +15,5 @@ linkedin_username: basanders
 markdown: kramdown
 plugins: 
   - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
