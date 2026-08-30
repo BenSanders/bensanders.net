@@ -30,10 +30,10 @@ h2, h3 {
   padding: 0.5em 0 1em 0;
 }
 
-.container {
+/* .container {
   display: grid;
   grid-template-columns: 1fr 1fr;
-}
+} */
 
 .wrap {
     max-width: var(--max-wid);
