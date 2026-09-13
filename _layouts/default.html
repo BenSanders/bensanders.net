@@ -33,18 +33,6 @@
                 </div>
             </div>
         </section>
-        <section id="blog">
-            <div class="wrap">
-                <h2>Blog</h2>
-                <ul>
-                    {% for post in site.posts %}
-                        <li>
-                            <a href="{{ post.url }}">{{ post.title }}</a>
-                        </li>
-                    {% endfor %}
-                </ul>
-            </div>
-        </section>
         <section id="gear">
             <div class="wrap">
                 <h2>My Gear</h2>
@@ -65,6 +53,18 @@
                     <p>Camera: Canon M50 II</p>
                     <p>Desk: Vivo Standing Desk (x2)</p>
                 </div>
+            </div>
+        </section>
+        <section id="blog">
+            <div class="wrap">
+                <h2>Blog</h2>
+                <ul>
+                    {% for post in site.posts %}
+                        <li>
+                            <a href="{{ post.url }}">{{ post.title }}</a>
+                        </li>
+                    {% endfor %}
+                </ul>
             </div>
         </section>
 {% include footer.html %}
