@@ -3,7 +3,7 @@
 <section id="post">
     <div class="wrap article-grid">
         <h2>{{ page.title }}</h2>
-        <p class="meta">{{ page.author }} | {{ page.date | date_to_long_string }} | {{ page.catagories }}</p>
+        <small class="meta">{{ page.author }} | {{ page.date | date_to_long_string }} | {{ page.catagories }}</small>
         {{ content }}
     </div>
 </section>

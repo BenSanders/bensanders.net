@@ -126,9 +126,9 @@ nav {
     list-style-type: none;
 }
 
-.about-grid {
-    /* display: grid;
-    grid-template-columns: 1.05fr 0.95fr; */
+.article-grid {
+  width: 100%;
+  max-width: 750px;
 }
 
 .gear-grid {
@@ -136,8 +136,27 @@ nav {
     grid-template-columns: 1fr 1fr 1fr;
 }
 
-.wrap.article-grid p {
+.article-grid p {
   padding: 1em 0 1em 0;
+  line-height: 1.5;
+  font-size: 1.1rem;
+}
+
+#post {
+  width: 100%;
+  max-width: 1080px;
+  margin: auto;
+}
+
+#post h2 {
+  text-align: center;
+  padding: 0;
+}
+
+#post .meta {
+  text-align: center;
+  padding: 10px 0 0 0;
+  display: block;
 }
 
 footer {
