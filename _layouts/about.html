@@ -7,29 +7,8 @@
                     <h2>Hello, I'm Ben!</h2>
                 </div>
                 <div>
-                    <h2>About Me</h2>
-                    <p>
-                        I'm an aspiring Network/Systems Administrator and love GNU/Linux. Technology has always been
-                        a big part of my life every since I was a kid.
-                    </p>
-                    <p>
-                        I've maintained my personal website online for more than a decade since I first bought the
-                        domain bensanders.me in 2010. I used to to use WordPress but found Jekyll and loved the idea
-                        of static websites.
-                    </p>
-                    <nav class="linktree-nav">
-                        <h2>My "Linktree"</h2>
-                        <div class="link-container">
-                            <div class="links">
-                                <ul>
-                                    <li><a href="mailto:hello@bensanders.net">E-Mail Me</a></li>
-                                    <li><a href="/assets/Benjamin Sanders hello@bensanders.net-(0x6315D57EC842B54E)-public.asc">Public Key</a></li>
-                                    <li><a href="https://www.instagram.com/thebensanders/">Instagram</a></li>
-                                    <li><a href="/feed.xml">RSS</a></li>
-                                </ul>
-                            </div>
-                        </div>
-                    </nav>
+                    <h2>{{ page.title }}</h2>
+                    {{ content }}
                 </div>
             </div>
         </section>
