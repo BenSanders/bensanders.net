@@ -156,6 +156,10 @@ nav {
   font-size: 1.1rem;
 }
 
+.article-grid img {
+    border-radius: 1em;
+}
+
 #post {
   width: 100%;
   max-width: 1080px;
