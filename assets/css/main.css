@@ -108,10 +108,10 @@ nav {
   text-align: left;
 }
 
-.linktree-nav a {
+/* .linktree-nav a {
     color: var(--text-dim);
     transition: color .15s ease;
-}
+} */
 
 .linktree a:hover { color: white; }
 
