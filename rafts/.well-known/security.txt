@@ -1,0 +1,13 @@
+# My security address
+Contact: mailto:hello@bensanders.net
+
+# My OpenPGP Key
+Encryption: https://bensanders.net/.well-known/pgp-key.txt
+
+# My Security Policy
+Policy:
+
+# My security acknowledgements page
+Acknowledgements:
+
+Expires: 2030-04-01T00:00:00
