@@ -35,9 +35,16 @@ h2, h3 {
   padding: 0.5em 0 1em 0;
 }
 
+#about {
+  background-color: #333;
+  color: white;
+  padding: 25px;
+}
+
 .about-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  align-items: center;
 }
 
 .about-grid p {
@@ -95,7 +102,7 @@ nav {
 
 .profile img {
     width: 250px;
-    border-radius: 50%;
+    border-radius: 5%;
 }
 
 .profile {
@@ -247,4 +254,11 @@ footer {
     width: 100%;
     max-width: 1070px;
     margin: 0 auto;
+}
+
+/* Media Queries */
+@media only screen and (max-width: 746px) {
+  .about-grid {
+    all:unset;
+}
 }
