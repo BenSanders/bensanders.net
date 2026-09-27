@@ -1,5 +1,5 @@
 :root {
-    --primary-bg-color: #ccc;
+    --primary-bg-color: #fff;
     --primary-topbar-color: #2d2d2d;
     --primary-text-color: black;
     --primary-link-color: #1a73e8;
@@ -57,13 +57,6 @@ h2, h3 {
     padding: 0 28px;
 }
 
-nav {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px 0;
-}
-
 .logo {
     display: flex;
     align-items: center;
@@ -74,20 +67,43 @@ nav {
     color: white;
 }
 
-.nav-link {
+nav.main-navigation {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 0;
+}
+
+nav.main-navigation div.nav-links {
     display: flex;
     align-items: center;
     gap:32px;
 }
 
-.nav-link a {
+nav.main-navigation .nav-links a {
     font-size: 14.5px;
     color: var(--text-dim);
     transition: color .15s ease;
 }
 
-.nav-link a:hover {
+nav.main-navigation .nav-links a:hover {
     color: white;
+}
+
+nav.links {
+    flex: 1 0 21%;
+    margin: 5px;
+    height: 100px;
+}
+
+
+.links ul {
+    padding: 0;
+    margin: 0;
+}
+
+.links ul li {
+    list-style-type: none;
 }
 
 .linktree {
@@ -126,30 +142,24 @@ nav {
     flex-wrap: wrap;
 }
 
-.links {
-    flex: 1 0 21%; /* explanation below */
-    margin: 5px;
-    height: 100px;
-}
-
-
-.links ul {
-    padding: 0;
-    margin: 0;
-}
-
-.links ul li {
-    list-style-type: none;
-}
-
 .gear-grid {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
 }
 
+section#blog {
+  background-color: #191919;
+  color: white;
+  padding: 20px 0 20px 0;
+}
+
 #blog ul li {
   list-style: none;
   padding: 0;
+  text-align: left;
+}
+
+section#blog h2 {
   text-align: center;
 }
 
@@ -169,7 +179,7 @@ nav {
 }
 
 .article-grid img {
-    border-radius: 1em;
+  border-radius: 1em;
 }
 
 #post {
