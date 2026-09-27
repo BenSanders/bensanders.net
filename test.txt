@@ -1,1 +1,14 @@
 You found a "secret" txt file! :D
+
+<section id="newsletter">
+            <form action="#" method="post">
+                <div class="newsletter-grid">
+                    <div class="email-input-wrapper">
+                        <input action="" type="email-input" placeholder="Type your email...">
+                    </div>
+                    <button class="subscribe-btn">
+                        <span>Subscribe</span>
+                    </button>
+                </div>
+            </form>
+        </section>

@@ -1,6 +1,6 @@
 :root {
     --primary-bg-color: #ccc;
-    --primary-topbar-color: #0f1700;
+    --primary-topbar-color: #2d2d2d;
     --primary-text-color: black;
     --primary-link-color: #1a73e8;
     --primary-font-family: arial;
@@ -205,6 +205,43 @@ pre {
   background-color: #333;
   border: 1px solid black;
   color: white;
+}
+
+/* News Page */
+.item {
+  background-color: var(--primary-topbar-color);
+  margin: 1em;
+  padding: 1em;
+  border-radius: 1em;
+  color: white;
+}
+
+/* Newsletter Form Styles */
+#newsletter {
+  width: 100%;
+  max-width: 260px;
+  margin: auto;
+}
+
+.newsletter-grid {
+  display: flex;
+}
+
+.email-input-wrapper input {
+  padding: 10px;
+  border-radius: 0.3em 0 0 0.3em;
+  border: 0;
+}
+
+.subscribe-btn {
+  padding: 10px;
+  margin: 0;
+  border: 0;
+  background: #2d2d2d;
+  color: white;
+  font-weight: bold;
+  border-radius: 0 0.3em 0.3em 0;
+  cursor: pointer;
 }
 
 footer {
