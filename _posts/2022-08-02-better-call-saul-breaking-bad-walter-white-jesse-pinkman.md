@@ -16,7 +16,7 @@ So, I just watched the last night’s latest Better Call Saul episode “Breakin
 
 First thing I loved is small and a personal reason. Which is for the inclusion of Jackie Chat Adventures from Fox Kids Saturday morning lineup. I loved seeing this at the opening of this episode because not only is it about the correct time period but also was part of my childhood. Really hit me in the nostalgia. Somebody even isolated the clip and put it up on YouTube already which you can watch below.
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/QJB5jmbhphU?si=sDqzXjZe59moyQEY" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+<iframe width="100%" height="315" src="https://www.youtube.com/embed/QJB5jmbhphU?si=sDqzXjZe59moyQEY" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
 Moving on to the rest of the episode. Which was a really fun thing to watch having basically seen this part of the episode only from the perspective of Walt and Jesse. Then Walt and Jesse each pay Saul off to make him their official attorney and seeing the conversation that happened before Saul helped out Badger. That was, I thought, a really great way to tie the two shows even closer into each other as we head full steam ahead into the penultimate episode.
 
