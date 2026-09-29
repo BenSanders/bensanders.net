@@ -2,7 +2,7 @@
 layout: post
 title: "Using Font Awesome In 2017"
 date: 2017-07-14
-permalink: "/blog/using-font-awesome-in-2017/"
+permalink: "/blog/using-font-awesome-in-2017"
 author: Benjamin Sanders
 catagories: font-awesome
 ---

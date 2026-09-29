@@ -2,7 +2,7 @@
 layout: post
 title: "Back To Jekyll"
 date: 2016-06-06
-permalink: "/blog/back-to-jekyll/"
+permalink: "/blog/back-to-jekyll"
 author: Benjamin Sanders
 catagories: jekyll
 ---

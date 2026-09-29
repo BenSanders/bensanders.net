@@ -2,7 +2,7 @@
 layout: post
 title: "My Thoughts on The Red Pill Documentary"
 date: 2017-03-18
-permalink: "/blog/the-red-pill/"
+permalink: "/blog/the-red-pill"
 author: Benjamin Sanders
 catagories: red-pill
 ---

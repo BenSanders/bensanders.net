@@ -2,7 +2,7 @@
 layout: post
 title: "Dragon Con + Blog Update"
 date: 2015-08-16
-permalink: "/blog/dragon-con-blog-update/"
+permalink: "/blog/dragon-con-blog-update"
 author: Benjamin Sanders
 catagories: dragon-con,2016,update
 ---

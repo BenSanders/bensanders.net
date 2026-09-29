@@ -2,7 +2,7 @@
 layout: post
 title: "Going Live With Git"
 date: 2016-06-19
-permalink: "/blog/going-live-with-git/"
+permalink: "/blog/going-live-with-git"
 author: Benjamin Sanders
 catagories: git
 ---

@@ -2,7 +2,7 @@
 layout: post
 title: "At Long Last"
 date: 2015-08-14
-permalink: "/blog/at-long-last/"
+permalink: "/blog/at-long-last"
 author: Benjamin Sanders
 catagories: update
 ---

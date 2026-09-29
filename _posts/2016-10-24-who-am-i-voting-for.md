@@ -2,7 +2,7 @@
 layout: post
 title: "Who Am I Voting For?"
 date: 2016-10-24
-permalink: "/blog/who-am-i-voting-for/"
+permalink: "/blog/who-am-i-voting-for"
 author: Benjamin Sanders
 catagories: voting,gary-johnson
 ---

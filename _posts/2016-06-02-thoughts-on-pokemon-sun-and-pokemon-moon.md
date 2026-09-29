@@ -2,11 +2,11 @@
 layout: post
 title: "Thoughts on: Pokemon Sun & Moon New Trailer"
 date: 2016-06-02
-permalink: "/blog/thoughts-on-pokemon-sun-and-pokemon-moon/"
+permalink: "/blog/thoughts-on-pokemon-sun-and-pokemon-moon"
 author: Benjamin Sanders
 catagories: pokemon sun, pokemon moon
 ---
-<iframe width="560" height="315" src="https://www.youtube.com/embed/XW14HO7C1Dg?si=CGst8qyXA9Q2FAi2" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+<iframe width="100%" height="315" src="https://www.youtube.com/embed/XW14HO7C1Dg?si=CGst8qyXA9Q2FAi2" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 
 So another Pokemon Sun & Pokemon Moon trailer just dropped a load more information. We finally can see what appears to be the whole of the new region. We can see what the pokedex will look like as well as the new professor.
 

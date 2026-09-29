@@ -2,7 +2,7 @@
 layout: post
 title: "Working Online and Where To Start"
 date: 2017-04-24
-permalink: "/blog/working-online-and-where-to-start/"
+permalink: "/blog/working-online-and-where-to-start"
 author: Benjamin Sanders
 catagories: working,online
 ---

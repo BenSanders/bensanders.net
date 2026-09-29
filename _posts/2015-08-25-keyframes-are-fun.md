@@ -2,7 +2,7 @@
 layout: post
 title: "Keyframes Are Fun"
 date: 2015-08-25
-permalink: "/blog/keyframes-are-fun/"
+permalink: "/blog/keyframes-are-fun"
 author: Benjamin Sanders
 catagories: css,keyframes
 ---

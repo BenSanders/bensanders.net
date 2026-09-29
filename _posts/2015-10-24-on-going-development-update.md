@@ -2,7 +2,7 @@
 layout: post
 title: "On Going Development + Update"
 date: 2016-03-11
-permalink: "/blog/on-going-development-plus-update/"
+permalink: "/blog/on-going-development-plus-update"
 author: Benjamin Sanders
 catagories: update
 ---

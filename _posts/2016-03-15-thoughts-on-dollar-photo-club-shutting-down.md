@@ -2,7 +2,7 @@
 layout: post
 title: "Thoughts On Dollar Photo Club Shutting Down"
 date: 2016-06-02
-permalink: "/blog/thoughts-on-dollar-photo-club-shutting/"
+permalink: "/blog/thoughts-on-dollar-photo-club-shutting"
 author: Benjamin Sanders
 catagories: dollar-photo-club
 ---

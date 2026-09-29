@@ -2,7 +2,7 @@
 layout: post
 title: "Writing Exercise"
 date: 2016-03-11
-permalink: "/blog/writing-excercise/"
+permalink: "/blog/writing-excercise"
 author: Benjamin Sanders
 catagories: writing-exercise
 ---

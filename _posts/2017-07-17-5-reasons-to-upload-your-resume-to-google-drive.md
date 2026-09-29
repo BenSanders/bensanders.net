@@ -2,7 +2,7 @@
 layout: post
 title: "5 Reasons To Upload Your Resume To Google Drive"
 date: 2017-07-17
-permalink: "/blog/5-reasons-to-upload-your-resume-to-google-drive/"
+permalink: "/blog/5-reasons-to-upload-your-resume-to-google-drive"
 author: Benjamin Sanders
 catagories: google-drive
 ---
