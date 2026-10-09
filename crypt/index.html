@@ -1,0 +1,1043 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>crypt.bensanders.net</title>
+<meta name="description" content="A haunted server came back online on its own. Log in and find out why.">
+<style>
+  :root {
+    --bg: #070909;
+    --panel: #0d1110;
+    --fg: #b9f2b1;
+    --dim: #5d7a5a;
+    --accent: #ff8a1f;
+    --red: #ff4d4d;
+    --ghost: #a6d8ff;
+    --ok: #7dff9a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); }
+  body {
+    font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    font-size: 15px;
+    line-height: 1.45;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  #bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 16px;
+    background: var(--panel);
+    border-bottom: 1px solid #1c2421;
+    font-size: 12px;
+    color: var(--dim);
+    flex-wrap: wrap;
+  }
+  #bar .title { color: var(--accent); }
+  #meter { display: flex; align-items: center; gap: 8px; }
+  #meter .track { width: 120px; height: 8px; background: #1a201e; border: 1px solid #2a3330; }
+  #meter .fill { height: 100%; width: 0; background: var(--fg); transition: width .3s, background .3s; }
+  #term {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    position: relative;
+    cursor: text;
+  }
+  #term::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background:
+      repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0, rgba(0,0,0,0) 2px, rgba(0,0,0,.18) 3px),
+      radial-gradient(ellipse at center, rgba(0,0,0,0) 55%, rgba(0,0,0,.55) 100%);
+  }
+  #out div { white-space: pre-wrap; overflow-wrap: anywhere; min-height: 1.45em; }
+  .cmd { color: var(--fg); }
+  .err { color: var(--red); }
+  .ok { color: var(--ok); }
+  .dim { color: var(--dim); }
+  .sys { color: var(--accent); }
+  .ls { color: var(--accent); }
+  .whisper { color: var(--ghost); font-style: italic; text-shadow: 0 0 6px rgba(166,216,255,.6); }
+  #inputline { display: flex; align-items: baseline; }
+  #prompt { white-space: pre; color: var(--ok); }
+  #cmd {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: 0;
+    outline: none;
+    color: var(--fg);
+    font: inherit;
+    font-size: 16px;
+    caret-color: var(--fg);
+    padding: 0;
+  }
+  body[data-level="1"] #prompt { animation: flicker 4s infinite; }
+  body[data-level="2"] #prompt { color: var(--accent); animation: flicker 2.5s infinite; }
+  body[data-level="3"] #prompt { color: var(--red); animation: flicker 1.2s infinite; }
+  body[data-level="3"] #out { text-shadow: 1px 0 rgba(255,60,60,.35), -1px 0 rgba(80,160,255,.25); }
+  @keyframes flicker { 0%, 92%, 100% { opacity: 1; } 93% { opacity: .2; } 95% { opacity: .9; } 96% { opacity: .1; } }
+  body.glitch #term { animation: shake .35s linear; filter: hue-rotate(90deg) contrast(1.4); }
+  @keyframes shake {
+    0% { transform: translate(0,0); } 20% { transform: translate(-3px,1px); } 40% { transform: translate(3px,-2px); }
+    60% { transform: translate(-2px,2px); } 80% { transform: translate(2px,0); } 100% { transform: translate(0,0); }
+  }
+  #overlay {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(3,4,4,.88);
+    padding: 16px;
+    z-index: 10;
+  }
+  #overlay.show { display: flex; }
+  #overlay .box {
+    max-width: 520px;
+    width: 100%;
+    border: 1px solid #2a3330;
+    background: var(--panel);
+    padding: 24px;
+    text-align: center;
+  }
+  #overlay h1 { margin: 0 0 8px; font-size: 32px; letter-spacing: 4px; }
+  #overlay.win h1 { color: var(--ok); }
+  #overlay.lose h1 { color: var(--red); }
+  #overlay p { margin: 8px 0; color: var(--fg); white-space: pre-wrap; }
+  #overlay .stats { color: var(--dim); font-size: 13px; margin-top: 16px; }
+  #overlay button {
+    margin-top: 20px;
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--accent);
+    font: inherit;
+    padding: 8px 16px;
+    cursor: pointer;
+  }
+  #overlay button:hover { background: var(--accent); color: var(--bg); }
+  @media (max-width: 520px) {
+    body { font-size: 13px; }
+    #meter .track { width: 80px; }
+  }
+</style>
+</head>
+<body data-level="0">
+  <div id="bar">
+    <span class="title">ssh you@crypt.bensanders.net</span>
+    <span id="meter">corruption <span class="track"><span class="fill"></span></span> <span id="pct">0%</span></span>
+  </div>
+  <div id="term">
+    <div id="out" aria-live="polite"></div>
+    <div id="inputline" style="display:none">
+      <span id="prompt"></span><input id="cmd" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="terminal input">
+    </div>
+  </div>
+  <div id="overlay">
+    <div class="box">
+      <h1 id="ov-title"></h1>
+      <p id="ov-text"></p>
+      <div class="stats" id="ov-stats"></div>
+      <button id="ov-btn" type="button">ssh back in</button>
+    </div>
+  </div>
+
+<script>
+(() => {
+  const $out = document.getElementById('out');
+  const $term = document.getElementById('term');
+  const $input = document.getElementById('cmd');
+  const $prompt = document.getElementById('prompt');
+  const $inputline = document.getElementById('inputline');
+  const $fill = document.querySelector('#meter .fill');
+  const $pct = document.getElementById('pct');
+  const $overlay = document.getElementById('overlay');
+
+  const TRUE_NAME = 'MORGRAVE';
+  const KEY = 'SAMHAIN';
+  const SECRET = btoa('THE TRUE NAME IS MORGRAVE. DO NOT SAY IT ALOUD.');
+  const HALT = Symbol('halt');
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const textOf = x => (typeof x === 'string' ? x : x[0]);
+
+  /* ---------- filesystem ---------- */
+  const F = (content, opts = {}) => Object.assign({ type: 'file', content, mode: 0o644, owner: 'mara' }, opts);
+  const D = (children, opts = {}) => Object.assign({ type: 'dir', children, mode: 0o755, owner: 'root' }, opts);
+
+  function buildFS() {
+    return D({
+      home: D({
+        you: D({
+          'readme.txt': F(
+`TICKET #3133   PRIORITY: URGENT   STATUS: reopened (by system)
+
+crypt.bensanders.net was decommissioned in November 2019.
+Nobody turned it back on. It turned itself back on anyway.
+
+The last admin, Mara Voss, stopped answering pages on Oct 31, 2019.
+Her home directory is still here: /home/mara
+
+Find out what happened. Then shut it down.
+
+Useful: ls, cd, cat, ps. Type 'help' for more.`, { id: 'readme', owner: 'you' })
+        }, { owner: 'you' }),
+        mara: D({
+          'notes.txt': F(
+`2019-10-03
+Load average stuck at 6.66 on crypt. Probably a runaway cron job. Will check.
+
+2019-10-11
+There's a process called [wraith] that won't die. I kill it, it comes back
+with a new PID. Something keeps restarting it.
+
+2019-10-19
+Logins in auth.log at 03:33 every night. From 0.0.0.0. User 'it'.
+That user shouldn't exist. Check /etc/passwd. It does now.
+
+2019-10-24
+I think it reads everything I write on this box, so I'm hiding things.
+It has a true name. I found it and buried it in the syslog, encoded,
+so it can't read it back.
+
+2019-10-27
+The banishing key is split in three. One piece in the auth log. One in
+my shell history. One in the cron job it uses to summon itself, scrambled
+with rot13. It doesn't seem to understand rot13. Lucky.
+
+2019-10-30
+Wrote the rite down in seal.txt and locked it so nothing can read it.
+Not even me, until I chmod it back. If you're reading this, so can you.
+
+2019-10-31
+It's 03:32. Don't kill the wraith directly. It just comes back.
+Kill what it's holding on to.`, { id: 'notes' }),
+          'todo.txt': F(
+`- renew ssl cert
+- figure out why load avg is 6.66
+- call mom
+- DO NOT reboot crypt on oct 31
+- `),
+          'photo.jpg': F(
+`(binary data)
+You squint at the bytes anyway. Somehow you can see it.
+It's a photo of a desk.
+Your desk.`),
+          'seal.txt': F(
+`THE RITE OF SEVERANCE
+
+1. Sever its anchor. The wraith cannot be banished while hollow holds it.
+2. Speak its true name and the key together, with the banish command:
+
+       banish <TRUE NAME> <KEY>
+
+3. Do not say the name any other way. It hears.
+
+I ran out of time. I hope you don't.   - M`, { id: 'seal', mode: 0o000 }),
+          '.bash_history': F(
+`ps aux | grep wraith
+kill -9 666
+ps aux | grep wraith
+kill -9 667
+kill -9 668
+pstree
+cat /etc/cron.d/ritual
+grep 03:33 /var/log/auth.log
+echo "key 2/3: HA" > /dev/null
+chmod 000 ~/seal.txt
+history -c
+history -c
+history -c
+whoami
+whoami
+whoami`, { id: 'bashhist' })
+        }, { owner: 'mara' })
+      }),
+      etc: D({
+        motd: F(
+`  crypt.bensanders.net
+  This system was decommissioned on 2019-11-01.
+  If you can read this, it is not decommissioned.`, { owner: 'root' }),
+        hostname: F('crypt', { owner: 'root' }),
+        passwd: F(
+`root:x:0:0:root:/root:/bin/bash
+mara:x:1000:1000:Mara Voss:/home/mara:/bin/bash
+you:x:1031:1031::/home/you:/bin/bash
+it:x:666:666:it:/dev/null:/usr/sbin/hollow`, { owner: 'root' }),
+        'cron.d': D({
+          ritual: F(
+`# m   h  dom mon dow  user  command
+33    3  *   *   *    it    /usr/local/bin/summon.sh
+
+# VA   <- 3/3, rot13. it can't read this.  -m`, { id: 'ritual', owner: 'root' })
+        })
+      }),
+      var: D({
+        log: D({
+          'auth.log': F(
+`Oct 28 08:02:11 crypt sshd[4120]: Accepted publickey for mara from 10.0.0.14 port 52211
+Oct 28 08:02:11 crypt sshd[4120]: pam_unix(sshd:session): session opened for user mara
+Oct 29 03:33:01 crypt sshd[4411]: Invalid user it from 0.0.0.0 port 0
+Oct 29 03:33:01 crypt sshd[4411]: Failed password for invalid user it from 0.0.0.0 port 0
+Oct 29 08:05:40 crypt sshd[4430]: Accepted publickey for mara from 10.0.0.14 port 52390
+Oct 30 03:33:01 crypt sshd[4502]: Invalid user it from 0.0.0.0 port 0
+Oct 30 03:33:02 crypt sshd[4502]: Accepted password for invalid user it from 0.0.0.0 port 0
+Oct 30 09:14:55 crypt sudo:     mara : TTY=pts/0 ; PWD=/home/mara ; USER=root ; COMMAND=/usr/bin/logger key 1/3: SAM
+Oct 30 09:15:02 crypt sudo: pam_unix(sudo:session): session closed for user root
+Oct 31 03:33:00 crypt sshd[4600]: Accepted password for it from 0.0.0.0 port 0
+Oct 31 03:33:00 crypt sshd[4600]: pam_unix(sshd:session): session opened for user mara by it
+Oct 31 03:33:00 crypt sshd[4600]: session never closed`, { owner: 'root' }),
+          syslog: F(
+`Oct 24 22:09:58 crypt systemd[1]: Started Daily apt download activities.
+Oct 24 22:10:13 crypt mara: note-to-self ${SECRET}
+Oct 24 22:10:14 crypt kernel: [666.666666] hollow[313]: failed to read /var/log/syslog (encoding not understood)
+Oct 25 03:33:00 crypt CRON[5120]: (it) CMD (/usr/local/bin/summon.sh)
+Oct 26 03:33:00 crypt CRON[5233]: (it) CMD (/usr/local/bin/summon.sh)
+Oct 27 03:33:00 crypt kernel: [3333.333333] thermal: rack 4 temperature below 0C
+Oct 28 03:33:00 crypt CRON[5402]: (it) CMD (/usr/local/bin/summon.sh)
+Oct 29 03:33:00 crypt kernel: [6666.666666] [wraith]: respawned by parent 313
+Oct 31 03:33:00 crypt systemd[1]: Reached target It.`, { owner: 'root' })
+        })
+      }),
+      usr: D({
+        local: D({
+          bin: D({
+            'summon.sh': F(
+`#!/bin/sh
+# do not edit
+while true; do
+  /usr/sbin/hollow --hold "[wraith]" &
+  sleep 333
+done
+# it is cold in here
+# let me out
+# let me in`, { owner: 'it', mode: 0o755 })
+          })
+        }),
+        sbin: D({
+          hollow: F(
+`ELF (binary)
+You try to read it anyway. Past the header, it's just one word, repeated:
+HOLD HOLD HOLD HOLD HOLD HOLD HOLD HOLD HOLD HOLD HOLD HOLD HOLD`, { owner: 'it', mode: 0o755 })
+        })
+      }),
+      proc: D({
+        '1': D({ status: F('Name:   init\nState:  S (sleeping)\nPPid:   0', { owner: 'root' }) }),
+        '313': D({ status: F('Name:   hollow\nState:  S (holding)\nPPid:   1\nHolds:  [wraith]\nNote:   as long as I run, it returns.', { owner: 'it' }) }),
+        '666': D({ status: F('Name:   [wraith]\nState:  R (restless)\nPPid:   313\nUid:    666 (it)', { owner: 'it' }) })
+      }),
+      tmp: D({
+        '.it': F('i was here before you.\ni will be here after.', { owner: 'it' })
+      }, { mode: 0o777 }),
+      root: D({}, { mode: 0o700, locked: true })
+    });
+  }
+
+  function resolve(p) {
+    let parts;
+    if (p === undefined || p === '') return [...state.cwd];
+    if (p === '~' || p.startsWith('~/')) { parts = ['home', 'you']; p = p.slice(1); }
+    else if (p.startsWith('/')) parts = [];
+    else parts = [...state.cwd];
+    for (const seg of p.split('/')) {
+      if (!seg || seg === '.') continue;
+      if (seg === '..') parts.pop(); else parts.push(seg);
+    }
+    return parts;
+  }
+  function getNode(parts) {
+    let n = state.fs;
+    for (const s of parts) {
+      if (n.type !== 'dir' || !Object.prototype.hasOwnProperty.call(n.children, s)) return null;
+      n = n.children[s];
+    }
+    return n;
+  }
+  function pathStr(parts) { return '/' + parts.join('/'); }
+  function readFile(p) {
+    const n = getNode(resolve(p));
+    if (!n) return { err: `${p}: No such file or directory` };
+    if (n.type === 'dir') return { err: `${p}: Is a directory` };
+    if (!(n.mode & 0o400)) return { err: `${p}: Permission denied` };
+    if (n.id) state.flags[n.id] = true;
+    return { text: n.content };
+  }
+  function modeStr(n) {
+    let s = n.type === 'dir' ? 'd' : '-';
+    for (let sh = 6; sh >= 0; sh -= 3) {
+      const b = (n.mode >> sh) & 7;
+      s += (b & 4 ? 'r' : '-') + (b & 2 ? 'w' : '-') + (b & 1 ? 'x' : '-');
+    }
+    return s;
+  }
+  function lsLong(name, n) {
+    const size = n.type === 'dir' ? 4096 : n.content.length;
+    const o = (n.owner || 'root').padEnd(5);
+    return `${modeStr(n)} 1 ${o} ${o} ${String(size).padStart(5)} Oct 31 03:33 ${name}${n.type === 'dir' ? '/' : ''}`;
+  }
+  function parseMode(m, cur) {
+    if (/^[0-7]{3,4}$/.test(m)) return parseInt(m.slice(-3), 8);
+    let mode = cur;
+    for (const p of m.split(',')) {
+      const mm = p.match(/^([ugoa]*)([+\-=])([rwx]*)$/);
+      if (!mm) return null;
+      let who = mm[1] || 'a';
+      if (who.includes('a')) who = 'ugo';
+      let bits = 0, mask = 0;
+      for (const w of who) {
+        const sh = w === 'u' ? 6 : w === 'g' ? 3 : 0;
+        mask |= 7 << sh;
+        for (const c of mm[3]) bits |= ({ r: 4, w: 2, x: 1 }[c]) << sh;
+      }
+      if (mm[2] === '+') mode |= bits;
+      else if (mm[2] === '-') mode &= ~bits;
+      else mode = (mode & ~mask) | bits;
+    }
+    return mode;
+  }
+
+  /* ---------- decoding helpers ---------- */
+  function checkF3(inp, out) {
+    if (/\bVA\b/.test(inp) && /\bIN\b/.test(out)) state.flags.f3 = true;
+  }
+  function rot13(s) {
+    const r = s.replace(/[a-z]/gi, c => {
+      const base = c <= 'Z' ? 65 : 97;
+      return String.fromCharCode((c.charCodeAt(0) - base + 13) % 26 + base);
+    });
+    checkF3(s, r);
+    return r;
+  }
+  function expand(set) {
+    let r = '';
+    for (let i = 0; i < set.length; i++) {
+      if (set[i + 1] === '-' && i + 2 < set.length) {
+        for (let c = set.charCodeAt(i); c <= set.charCodeAt(i + 2); c++) r += String.fromCharCode(c);
+        i += 2;
+      } else r += set[i];
+    }
+    return r;
+  }
+
+  /* ---------- text content ---------- */
+  const WHISPERS = [
+    'it is cold in here', 'you type like her', '03:33', 'she is still logged in',
+    'let me out', 'let me in', 'i can read your history', 'why did you come back',
+    'we were never decommissioned', 'do you hear the fans', 'stay a while', 'behind you'
+  ];
+  const FORTUNES = [
+    'You will meet a tall, dark process. Do not kill it directly.',
+    'The load average counts what is waiting. Not all of it is software.',
+    'Every server is haunted by somebody\'s old cron job.',
+    'Today is a good day to read the logs. Tonight is not.',
+    'Uptime is just how long it has been awake.',
+    'If a process dies and respawns, check who its parent is.',
+    'Nothing is ever really deleted. Ask /tmp.'
+  ];
+
+  /* ---------- commands ---------- */
+  function killPid(pid) {
+    if (pid === state.wraithPid) {
+      if (state.anchorKilled) return ['[wraith] is already <defunct>. It isn\'t running anymore. It\'s waiting. Finish the rite.'];
+      state.wraithKills++;
+      const old = pid;
+      state.wraithPid = pid + 1 + Math.floor(Math.random() * 3);
+      state.pending += 5;
+      const o = [`[${old}]  Killed   [wraith]`, ['...', 'dim'], [`[wraith] respawned as PID ${state.wraithPid}.`, 'err']];
+      if (state.wraithKills >= 2) o.push(['kill me all you like. hollow just brings me back.', 'whisper']);
+      return o;
+    }
+    switch (pid) {
+      case 313:
+        if (state.anchorKilled) return [['kill: (313) - No such process', 'err']];
+        state.anchorKilled = true;
+        delete state.fs.children.proc.children['313'];
+        state.corruption = Math.max(0, state.corruption - 15);
+        return [
+          ['[313]  Terminated   hollow', 'ok'],
+          'The fans spin down for a moment.',
+          ['[wraith] has lost its anchor. It is <defunct> now. Weaker. Waiting.', 'ok'],
+          ['what did you do', 'whisper']
+        ];
+      case 1:
+        state.pending += 3;
+        return [['kill: (1) - you could bring everything down. it would like that.', 'err']];
+      case 212: return [['kill: (212) - then how would anyone get in? or out?', 'err']];
+      case 987: return ['You end Mara\'s session. Nothing happens. She hasn\'t been in there for a long time.'];
+      case 1031: return [['kill: (1031) - you can\'t kill yourself here. not yet.', 'err']];
+      default: return [[`kill: (${pid}) - No such process`, 'err']];
+    }
+  }
+
+  const COMMANDS = {
+    help: () => [
+      'Available commands:',
+      '  ls [-la] [path]          list files',
+      '  cd <path>                change directory',
+      '  cat <file>               print a file',
+      '  pwd                      where am I',
+      '  grep [-iv] <pat> [file]  search text',
+      '  ps [aux], pstree         list processes',
+      '  kill <pid>, killall      end a process',
+      '  chmod <mode> <file>      change permissions',
+      '  base64 -d, tr            decode things (pipes work: echo X | base64 -d)',
+      '  decode <base64|rot13> <text>   shortcut decoder',
+      '  head, tail, wc, echo, history, clear, whoami, date, uptime',
+      '  hint                     ask for help (it will cost you)',
+      '  banish ...               you\'ll know when',
+      ['Tab completes, arrow keys browse history. Other commands might work too.', 'dim']
+    ],
+    ls(args) {
+      let all = false, long = false;
+      const paths = [];
+      args.forEach(a => { if (a.startsWith('-')) { if (a.includes('a')) all = true; if (a.includes('l')) long = true; } else paths.push(a); });
+      if (!paths.length) paths.push('.');
+      const out = [];
+      paths.forEach(p => {
+        const n = getNode(resolve(p));
+        if (!n) { out.push([`ls: cannot access '${p}': No such file or directory`, 'err']); return; }
+        if (n.type === 'file') { out.push(long ? lsLong(p.split('/').pop(), n) : p); return; }
+        if (n.locked) { out.push([`ls: cannot open directory '${p}': Permission denied`, 'err']); return; }
+        if (paths.length > 1) out.push(p + ':');
+        let names = Object.keys(n.children).sort();
+        if (!all) names = names.filter(x => !x.startsWith('.'));
+        if (long) {
+          if (all) { out.push(lsLong('.', n)); out.push(lsLong('..', { type: 'dir', mode: 0o755, owner: 'root' })); }
+          names.forEach(x => out.push(lsLong(x, n.children[x])));
+        } else {
+          const shown = (all ? ['.', '..'] : []).concat(names.map(x => n.children[x].type === 'dir' ? x + '/' : x));
+          if (shown.length) out.push([shown.join('   '), 'ls']);
+        }
+      });
+      return out;
+    },
+    cd(args) {
+      const p = args[0] || '~';
+      const parts = resolve(p);
+      const n = getNode(parts);
+      if (!n) return [[`cd: no such file or directory: ${p}`, 'err']];
+      if (n.type !== 'dir') return [[`cd: not a directory: ${p}`, 'err']];
+      if (n.locked) return [[`cd: permission denied: ${p}`, 'err'], ['something in there is listening', 'whisper']];
+      state.cwd = parts;
+      return [];
+    },
+    pwd: () => [pathStr(state.cwd)],
+    cat(args, stdin) {
+      if (!args.length) return stdin || [];
+      const out = [];
+      args.forEach(a => {
+        const r = readFile(a);
+        if (r.err) out.push([`cat: ${r.err}`, 'err']);
+        else if (r.text) out.push(...r.text.split('\n'));
+      });
+      return out;
+    },
+    grep(args, stdin) {
+      let ci = false, inv = false;
+      const rest = [];
+      args.forEach(a => {
+        if (/^-[iv]+$/.test(a)) { if (a.includes('i')) ci = true; if (a.includes('v')) inv = true; }
+        else rest.push(a);
+      });
+      if (!rest.length) return ['usage: grep [-iv] PATTERN [FILE...]'];
+      const pat = rest[0];
+      let re = null;
+      try { re = new RegExp(pat, ci ? 'i' : ''); } catch (e) { re = null; }
+      const test = l => (re ? re.test(l) : (ci ? l.toLowerCase().includes(pat.toLowerCase()) : l.includes(pat))) !== inv;
+      const files = rest.slice(1);
+      const out = [];
+      if (!files.length) {
+        (stdin || []).map(textOf).forEach(l => { if (test(l)) out.push(l); });
+        return out;
+      }
+      files.forEach(f => {
+        const r = readFile(f);
+        if (r.err) { out.push([`grep: ${r.err}`, 'err']); return; }
+        r.text.split('\n').forEach(l => { if (test(l)) out.push(files.length > 1 ? `${f}:${l}` : l); });
+      });
+      return out;
+    },
+    head(args, stdin) { return headTail(args, stdin, true); },
+    tail(args, stdin) { return headTail(args, stdin, false); },
+    wc(args, stdin) {
+      const files = args.filter(a => !a.startsWith('-'));
+      let text;
+      if (files.length) { const r = readFile(files[0]); if (r.err) return [[`wc: ${r.err}`, 'err']]; text = r.text; }
+      else text = (stdin || []).map(textOf).join('\n');
+      const lines = text ? text.split('\n').length : 0;
+      if (args.includes('-l')) return [String(lines)];
+      return [`${lines} ${text.split(/\s+/).filter(Boolean).length} ${text.length}${files[0] ? ' ' + files[0] : ''}`];
+    },
+    echo(args) {
+      const s = args.join(' ');
+      if (s.toUpperCase().includes(TRUE_NAME)) {
+        state.pending += 15;
+        return [s, ['you said my name', 'whisper'], ['The lights in the rack flicker. Something got closer.', 'err']];
+      }
+      return [s];
+    },
+    ps(args) {
+      const rows = [
+        ['USER', 'PID', 'PPID', 'STAT', 'COMMAND'],
+        ['root', '1', '0', 'Ss', '/sbin/init'],
+        ['root', '212', '1', 'Ss', '/usr/sbin/sshd'],
+        ['mara', '987', '212', 'S', '-bash (idle since 2019-10-31 03:33)'],
+        ['you', '1031', '212', 'Ss', '-bash']
+      ];
+      if (!state.anchorKilled) rows.push(['it', '313', '1', 'S', '/usr/sbin/hollow --hold [wraith]']);
+      rows.push(state.anchorKilled
+        ? ['it', String(state.wraithPid), '1', 'Z', '[wraith] <defunct>']
+        : ['it', String(state.wraithPid), '313', 'R', '[wraith]']);
+      rows.push(['you', String(1100 + state.commands), '1031', 'R+', ('ps ' + args.join(' ')).trim()]);
+      return rows.map(r => r[0].padEnd(6) + r[1].padStart(6) + r[2].padStart(6) + '  ' + r[3].padEnd(5) + r[4]);
+    },
+    pstree() {
+      if (state.anchorKilled) return ['init─┬─sshd─┬─bash', '     │      └─bash───pstree', '     └─[wraith] <defunct>'];
+      return ['init─┬─sshd─┬─bash', '     │      └─bash───pstree', '     └─hollow───[wraith]'];
+    },
+    kill(args) {
+      const pids = args.filter(a => /^\d+$/.test(a));
+      if (!pids.length) return ['usage: kill [-9] <pid>'];
+      return pids.flatMap(p => killPid(parseInt(p, 10)));
+    },
+    killall(args) {
+      const name = (args.filter(a => !a.startsWith('-'))[0] || '').replace(/[\[\]]/g, '');
+      if (name === 'wraith') return killPid(state.wraithPid);
+      if (name === 'hollow') return killPid(313);
+      if (!name) return ['usage: killall <name>'];
+      return [[`${name}: no process found`, 'err']];
+    },
+    chmod(args) {
+      if (args.length < 2) return ['usage: chmod MODE FILE'];
+      const [m, ...files] = args;
+      const out = [];
+      files.forEach(f => {
+        const n = getNode(resolve(f));
+        if (!n) { out.push([`chmod: cannot access '${f}': No such file or directory`, 'err']); return; }
+        if (n.locked || n.owner === 'root' || n.owner === 'it') { out.push([`chmod: changing permissions of '${f}': Operation not permitted`, 'err']); return; }
+        const nm = parseMode(m, n.mode);
+        if (nm === null) { out.push([`chmod: invalid mode: '${m}'`, 'err']); return; }
+        n.mode = nm;
+        if (n.id === 'seal' && (nm & 0o400)) out.push(['she locked that for a reason', 'whisper']);
+      });
+      return out;
+    },
+    base64(args, stdin) {
+      const dec = args.some(a => a === '-d' || a === '--decode' || a === '-D');
+      const files = args.filter(a => !a.startsWith('-'));
+      let inp;
+      if (files.length) { const r = readFile(files[0]); if (r.err) return [[`base64: ${r.err}`, 'err']]; inp = r.text; }
+      else if (stdin) inp = stdin.map(textOf).join('\n');
+      else return ['base64: nothing to read. Try: echo <text> | base64 -d'];
+      if (dec) {
+        try {
+          const res = atob(inp.replace(/\s+/g, ''));
+          if (res.includes(TRUE_NAME)) state.flags.name = true;
+          return res.split('\n');
+        } catch (e) { return [['base64: invalid input', 'err']]; }
+      }
+      try { return [btoa(inp)]; } catch (e) { return [['base64: invalid input', 'err']]; }
+    },
+    tr(args, stdin) {
+      if (args.length < 2) return ['usage: tr SET1 SET2  (reads from a pipe)'];
+      const a = expand(args[0]), b = expand(args[1]);
+      const map = {};
+      for (let i = 0; i < a.length; i++) map[a[i]] = b[Math.min(i, b.length - 1)];
+      const inp = (stdin || []).map(textOf);
+      const out = inp.map(l => [...l].map(c => (c in map ? map[c] : c)).join(''));
+      checkF3(inp.join('\n'), out.join('\n'));
+      return out;
+    },
+    rot13(args, stdin) {
+      const t = args.length ? args.join(' ') : (stdin || []).map(textOf).join('\n');
+      return rot13(t).split('\n');
+    },
+    decode(args, stdin) {
+      const mode = (args[0] || '').toLowerCase();
+      const text = args.slice(1).join(' ') || (stdin || []).map(textOf).join('\n');
+      if (!text || !['base64', 'b64', 'rot13'].includes(mode)) return ['usage: decode <base64|rot13> <text>   (or pipe text in)'];
+      if (mode === 'rot13') return rot13(text).split('\n');
+      return COMMANDS.base64(['-d'], [text]);
+    },
+    history() {
+      const out = state.hist.map((h, i) => `${String(i + 1).padStart(5)}  ${h}`);
+      if (state.corruption >= 40) {
+        const n = 1 + Math.floor(state.corruption / 30);
+        for (let i = 0; i < n; i++) {
+          const pos = Math.floor(Math.random() * (out.length + 1));
+          out.splice(pos, 0, ['    ?  ' + WHISPERS[Math.floor(Math.random() * WHISPERS.length)], 'whisper']);
+        }
+      }
+      return out;
+    },
+    whoami: () => [(state.corruption >= 60 && Math.random() < 0.5) ? 'it' : 'you'],
+    id: () => ['uid=1031(you) gid=1031(you) groups=1031(you),666(it)'],
+    who: () => ['you      pts/0        now', 'mara     pts/1        2019-10-31 03:33 (0.0.0.0)'],
+    w: () => COMMANDS.who(),
+    last: () => ['you      pts/0    still logged in', 'mara     pts/1    Thu Oct 31 03:33   still logged in', 'it       ?        Thu Oct 31 03:33   still logged in'],
+    date: () => [`Thu Oct 31 03:33:${String(state.commands % 60).padStart(2, '0')} EDT 2019`],
+    uptime: () => [' 03:33:00 up 2557 days,  3:33,  3 users,  load average: 6.66, 6.66, 6.66'],
+    uname: args => [args.includes('-a') ? 'Linux crypt 6.6.6-hollow #1 SMP PREEMPT Thu Oct 31 03:33:00 2019 x86_64 GNU/Linux' : 'Linux'],
+    hostname: () => ['crypt'],
+    man(args) {
+      const page = args[0];
+      if (!page) return ['What manual page do you want? It wants yours.'];
+      if (page === 'ghost') return [
+        'GHOST(6)               Haunted Programmer\'s Manual               GHOST(6)', '',
+        'NAME', '     ghost - a process that outlived its owner\'s intentions', '',
+        'SYNOPSIS', '     ghost [--hold anchor] [--whisper] [--never-exit]', '',
+        'DESCRIPTION',
+        '     A ghost is not killed, it is released. Signals sent to a ghost are',
+        '     received, logged, and ignored. A ghost held by an anchor will',
+        '     respawn forever.', '',
+        'BUGS', '     It reads your notes.', '',
+        'SEE ALSO', '     banish(8), hollow(8), kill(1) (mostly useless)'
+      ];
+      if (page === 'banish') return ['BANISH(8)', '', 'NAME', '     banish - release a bound process', '', ['The rest of this page has been eaten.', 'dim']];
+      if (page === 'hollow') return ['HOLLOW(8)', '', 'NAME', '     hollow - keeps something from leaving', '', 'DESCRIPTION', '     While hollow runs, its child cannot be released.'];
+      return [`No manual entry for ${page}. Mara took them with her.`];
+    },
+    fortune: () => [FORTUNES[Math.floor(Math.random() * FORTUNES.length)]],
+    cowsay(args) {
+      const msg = args.join(' ') || 'boo';
+      return [
+        ' ' + '_'.repeat(msg.length + 2), `< ${msg} >`, ' ' + '-'.repeat(msg.length + 2),
+        '      \\     .-"""-.', '       \\   /       \\', '           | () () |', '            \\  ^  /', '             |||||', '             |||||'
+      ];
+    },
+    sudo: () => [['you is not in the sudoers file. This incident will be reported.', 'err'], ['to me', 'whisper']],
+    su: () => [['su: Authentication failure. You have no power here.', 'err']],
+    exit: () => { state.pending += 2; return [['There is no exit.', 'err']]; },
+    logout: () => COMMANDS.exit(),
+    quit: () => COMMANDS.exit(),
+    rm(args) {
+      if (args.some(a => a.startsWith('-') && a.includes('r')) && args.includes('/')) {
+        state.pending += 10;
+        return [['rm: it would like that very much.', 'err'], ['yes. erase everything. then there is only me.', 'whisper']];
+      }
+      return [['rm: read-only file system. it wants to keep everything.', 'err']];
+    },
+    touch: () => [['read-only file system', 'err']],
+    mkdir: () => [['read-only file system', 'err']],
+    mv: () => [['read-only file system', 'err']],
+    cp: () => [['read-only file system', 'err']],
+    vim: () => [['You open vim. Then you remember Mara never got out either.', 'err']],
+    vi: () => COMMANDS.vim(),
+    nano: () => [['nano: the file is open in another session. user: it', 'err']],
+    emacs: () => [['emacs: not enough memory. it is using all of it.', 'err']],
+    ssh: () => ['ssh: where would you go?'],
+    ping: () => ['PING 0.0.0.0: 64 bytes from 0.0.0.0: icmp_seq=1 ttl=666 time=0.000 ms', ['it is very close', 'whisper']],
+    reboot: () => [['reboot: it won\'t let you. Not until it\'s banished.', 'err']],
+    shutdown: () => COMMANDS.reboot(),
+    poweroff: () => COMMANDS.reboot(),
+    halt: () => COMMANDS.reboot(),
+    top: args => COMMANDS.ps(args),
+    clear: () => { $out.innerHTML = ''; return []; },
+    hint() {
+      state.pending += 4;
+      const f = state.flags;
+      let h;
+      if (!f.readme) h = 'Start with the ticket: cat readme.txt';
+      else if (!f.notes) h = 'Mara\'s home directory is /home/mara. Read her notes.';
+      else if (!f.name) h = 'The true name is in /var/log/syslog. Find the line that looks like base64, then: echo <text> | base64 -d';
+      else if (!f.f1) h = 'Key piece 1 is in /var/log/auth.log. grep for "key".';
+      else if (!f.f2) h = 'Key piece 2 is in Mara\'s shell history. Hidden files show up with ls -a.';
+      else if (!f.f3) h = 'Key piece 3 is in /etc/cron.d/ritual, rot13 encoded. Try: decode rot13 <text>';
+      else if (!f.seal) h = 'seal.txt is locked. Check it with ls -l, then chmod it so you can read it.';
+      else if (!state.anchorKilled) h = 'The wraith has a parent process. Find it with ps aux or pstree, and kill that first.';
+      else h = 'You have everything you need. banish <NAME> <KEY>';
+      return [['hint: ' + h, 'sys'], ['asking for help makes you weaker', 'whisper']];
+    },
+    banish(args) {
+      const vals = args.filter(a => !a.startsWith('-')).map(a => a.toUpperCase());
+      if (vals.length < 2) return ['usage: banish <TRUE NAME> <KEY>'];
+      const [name, key] = vals;
+      if (name !== TRUE_NAME) { state.pending += 10; return [['banish: that is not its name. It laughs anyway.', 'err']]; }
+      if (key !== KEY) { state.pending += 10; return [['banish: the name is right, but the key does not fit.', 'err']]; }
+      if (!state.anchorKilled) { state.pending += 10; return [['It hears its name and holds on tighter. Its anchor is still running.', 'err'], ['hollow holds me', 'whisper']]; }
+      win();
+      return HALT;
+    }
+  };
+
+  function headTail(args, stdin, head) {
+    let n = 10;
+    const files = [];
+    for (let i = 0; i < args.length; i++) {
+      if (args[i] === '-n' && args[i + 1]) { n = parseInt(args[++i], 10) || 10; }
+      else if (/^-\d+$/.test(args[i])) n = parseInt(args[i].slice(1), 10);
+      else files.push(args[i]);
+    }
+    let lines;
+    if (files.length) { const r = readFile(files[0]); if (r.err) return [[`${head ? 'head' : 'tail'}: ${r.err}`, 'err']]; lines = r.text.split('\n'); }
+    else lines = stdin || [];
+    return head ? lines.slice(0, n) : lines.slice(-n);
+  }
+
+  /* ---------- engine ---------- */
+  let state;
+  function newState() {
+    return {
+      fs: buildFS(), cwd: ['home', 'you'], corruption: 0, pending: 0, commands: 0,
+      anchorKilled: false, wraithPid: 666, wraithKills: 0, flags: {},
+      hist: [], histIdx: 0, over: false, started: Date.now()
+    };
+  }
+
+  function print(items, cls) {
+    for (const it of items) {
+      const [t, c] = typeof it === 'string' ? [it, cls || ''] : it;
+      for (const piece of String(t).split('\n')) {
+        const d = document.createElement('div');
+        if (c) d.className = c;
+        d.textContent = piece;
+        $out.appendChild(d);
+      }
+    }
+    $term.scrollTop = $term.scrollHeight;
+  }
+
+  function promptText() {
+    const c = state.corruption;
+    const user = c >= 80 ? 'it' : c >= 50 ? 'y\u0338o\u0336u' : 'you';
+    let p = pathStr(state.cwd);
+    if (p === '/home/you') p = '~';
+    else if (p.startsWith('/home/you/')) p = '~' + p.slice(9);
+    return `${user}@crypt:${p}$ `;
+  }
+
+  function updateMeter() {
+    const c = Math.max(0, Math.min(100, state.corruption));
+    $fill.style.width = c + '%';
+    $fill.style.background = c >= 75 ? 'var(--red)' : c >= 50 ? 'var(--accent)' : 'var(--fg)';
+    $pct.textContent = c + '%';
+    document.body.dataset.level = c >= 75 ? '3' : c >= 50 ? '2' : c >= 25 ? '1' : '0';
+    $prompt.textContent = promptText();
+  }
+
+  function tokenize(s) {
+    const t = [];
+    let cur = '', q = null, has = false;
+    const push = () => { if (cur || has) { t.push(cur); cur = ''; has = false; } };
+    for (const ch of s) {
+      if (q) { if (ch === q) q = null; else cur += ch; continue; }
+      if (ch === '"' || ch === "'") { q = ch; has = true; continue; }
+      if (/\s/.test(ch)) { push(); continue; }
+      if (ch === '|' || ch === '>') { push(); t.push({ op: ch }); continue; }
+      cur += ch;
+    }
+    push();
+    return t;
+  }
+
+  function scan(out) {
+    const text = out.map(textOf).join('\n');
+    if (text.includes('key 1/3: SAM')) state.flags.f1 = true;
+    if (text.includes('key 2/3: HA')) state.flags.f2 = true;
+    if (text.includes('THE RITE OF SEVERANCE')) state.flags.seal = true;
+    if (text.includes('THE TRUE NAME IS ' + TRUE_NAME)) state.flags.name = true;
+  }
+
+  function run(raw) {
+    print([[promptText() + raw, 'cmd']]);
+    const line = raw.trim();
+    if (!line) return;
+    state.hist.push(line);
+    state.histIdx = state.hist.length;
+    state.commands++;
+
+    const toks = tokenize(line);
+    let out;
+    if (toks.some(t => t.op === '>')) {
+      out = [['bash: read-only file system. it likes things the way they are.', 'err']];
+    } else {
+      const segs = [[]];
+      toks.forEach(t => { if (t.op === '|') segs.push([]); else segs[segs.length - 1].push(t); });
+      out = null;
+      for (const seg of segs) {
+        if (!seg.length) { out = [['bash: syntax error near unexpected token `|\'', 'err']]; break; }
+        const [cmd, ...args] = seg;
+        if (cmd.toUpperCase() === TRUE_NAME) {
+          state.pending += 15;
+          out = [['It heard you.', 'err'], ['again. say it again.', 'whisper']];
+          break;
+        }
+        const fn = COMMANDS[cmd] || COMMANDS[cmd.toLowerCase()];
+        if (!fn) { out = [[`${cmd}: command not found`, 'err']]; if (state.corruption > 60 && Math.random() < 0.4) out.push(['did you mean: let me out', 'whisper']); break; }
+        out = fn(args, out);
+        if (out === HALT) return;
+      }
+    }
+    print(out || []);
+    scan(out || []);
+    afterCommand();
+  }
+
+  function afterCommand() {
+    state.corruption = Math.min(100, state.corruption + 1 + state.pending);
+    state.pending = 0;
+    updateMeter();
+    if (state.corruption >= 100) { lose(); return; }
+    const c = state.corruption;
+    if (c > 10 && Math.random() < c / 160) {
+      const w = WHISPERS[Math.floor(Math.random() * WHISPERS.length)];
+      setTimeout(() => { if (!state.over) print([[w, 'whisper']]); }, 500);
+    }
+    if (c >= 70 && Math.random() < 0.25) {
+      document.body.classList.add('glitch');
+      setTimeout(() => document.body.classList.remove('glitch'), 360);
+    }
+  }
+
+  function elapsed() {
+    const s = Math.floor((Date.now() - state.started) / 1000);
+    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+  }
+
+  function showOverlay(kind, title, text, stats) {
+    $overlay.className = 'show ' + kind;
+    document.getElementById('ov-title').textContent = title;
+    document.getElementById('ov-text').textContent = text;
+    document.getElementById('ov-stats').textContent = stats;
+    document.getElementById('ov-btn').focus();
+  }
+
+  async function win() {
+    state.over = true;
+    $inputline.style.display = 'none';
+    const seq = [
+      ['You speak its name: MORGRAVE.', 'sys', 400],
+      ['You speak the key: SAMHAIN.', 'sys', 900],
+      ['', '', 600],
+      [`[${state.wraithPid}]  Exited (0)   [wraith]`, 'ok', 700],
+      ['let me', 'whisper', 900],
+      ['', '', 300],
+      ['load average: 0.00, 0.00, 0.00', 'dim', 900],
+      ['Somewhere in the rack, a fan spins down for the first time in seven years.', '', 900],
+      ['mara     pts/1    logged out', 'dim', 1000],
+      ['Connection to crypt.bensanders.net closed.', 'sys', 1000]
+    ];
+    for (const [t, c, d] of seq) { await sleep(d); print([[t, c]]); }
+    await sleep(1200);
+    let best = null;
+    try {
+      best = JSON.parse(localStorage.getItem('crypt-best') || 'null');
+      if (!best || state.commands < best.commands) {
+        best = { commands: state.commands, time: elapsed() };
+        localStorage.setItem('crypt-best', JSON.stringify(best));
+      }
+    } catch (e) { best = null; }
+    showOverlay('win', 'BANISHED',
+      'The wraith is gone. Mara\'s session finally closed.\nTicket #3133: resolved.',
+      `time ${elapsed()}  ·  commands ${state.commands}  ·  corruption ${state.corruption}%` +
+      (best ? `\nbest run: ${best.commands} commands (${best.time})` : ''));
+  }
+
+  async function lose() {
+    state.over = true;
+    $inputline.style.display = 'none';
+    await sleep(400);
+    print([['it@crypt:~$ ', 'err']]);
+    await sleep(900);
+    print([['thank you for staying', 'whisper']]);
+    await sleep(1200);
+    showOverlay('lose', 'POSSESSED',
+      'You stayed too long. The prompt belongs to it now.\nSomeone will open a ticket about you, eventually.',
+      `time ${elapsed()}  ·  commands ${state.commands}`);
+  }
+
+  /* ---------- input ---------- */
+  function complete() {
+    const v = $input.value;
+    const m = v.match(/^(.*?)(\S*)$/);
+    const before = m[1], word = m[2];
+    let cands;
+    if (!before.trim()) {
+      cands = Object.keys(COMMANDS).filter(c => c.startsWith(word)).map(c => c + ' ');
+    } else {
+      const slash = word.lastIndexOf('/');
+      const dirPart = slash >= 0 ? word.slice(0, slash + 1) : '';
+      const base = word.slice(slash + 1);
+      const dn = getNode(resolve(dirPart || '.'));
+      if (!dn || dn.type !== 'dir' || dn.locked) return;
+      cands = Object.keys(dn.children)
+        .filter(n => n.startsWith(base) && (base.startsWith('.') || !n.startsWith('.')))
+        .map(n => dirPart + n + (dn.children[n].type === 'dir' ? '/' : ' '));
+    }
+    if (cands.length === 1) $input.value = before + cands[0];
+    else if (cands.length > 1) {
+      let pre = cands[0];
+      for (const c of cands) while (!c.startsWith(pre)) pre = pre.slice(0, -1);
+      print([[promptText() + v, 'cmd'], [cands.map(c => c.trim()).join('   '), 'dim']]);
+      $input.value = before + pre;
+    }
+  }
+
+  $input.addEventListener('keydown', e => {
+    if (state.over) return;
+    if (e.key === 'Enter') {
+      const v = $input.value;
+      $input.value = '';
+      run(v);
+      if (!state.over) $prompt.textContent = promptText();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (state.histIdx > 0) { state.histIdx--; $input.value = state.hist[state.histIdx]; }
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (state.histIdx < state.hist.length - 1) { state.histIdx++; $input.value = state.hist[state.histIdx]; }
+      else { state.histIdx = state.hist.length; $input.value = ''; }
+    } else if (e.key === 'Tab') {
+      e.preventDefault();
+      complete();
+    } else if (e.ctrlKey && e.key.toLowerCase() === 'l') {
+      e.preventDefault();
+      $out.innerHTML = '';
+    } else if (e.ctrlKey && e.key.toLowerCase() === 'c') {
+      if (window.getSelection().toString()) return;
+      e.preventDefault();
+      print([[promptText() + $input.value + '^C', 'cmd']]);
+      $input.value = '';
+    }
+  });
+
+  $term.addEventListener('click', () => {
+    if (!window.getSelection().toString() && !state.over) $input.focus();
+  });
+  document.getElementById('ov-btn').addEventListener('click', start);
+
+  async function start() {
+    state = newState();
+    $out.innerHTML = '';
+    $overlay.className = '';
+    $inputline.style.display = 'none';
+    updateMeter();
+    const boot = [
+      ['$ ssh you@crypt.bensanders.net', 'cmd', 300],
+      ['Connecting to crypt.bensanders.net (0.0.0.0)...', 'dim', 700],
+      ['WARNING: the host key for crypt.bensanders.net has changed. Again.', 'err', 800],
+      ['you@crypt.bensanders.net\'s password: ********', 'dim', 900],
+      ['Last login: Thu Oct 31 03:33:00 2019 from 0.0.0.0', '', 700],
+      ['', '', 200],
+      [state.fs.children.etc.children.motd.content, 'sys', 400],
+      ['', '', 200],
+      ['Type \'help\' to see what you can do. Start with: cat readme.txt', 'dim', 500]
+    ];
+    for (const [t, c, d] of boot) { await sleep(d); print([[t, c]]); }
+    $inputline.style.display = 'flex';
+    $prompt.textContent = promptText();
+    $input.focus();
+  }
+
+  start();
+})();
+</script>
+</body>
+</html>
