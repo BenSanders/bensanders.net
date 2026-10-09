@@ -168,6 +168,65 @@
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   const textOf = x => (typeof x === 'string' ? x : x[0]);
 
+  /* ---------- shared state (optional backend; game works offline without it) ---------- */
+  // Shared stats are off. Set this to '/crypt/api' to turn them back on if a backend ever exists.
+  const API = null;
+  const HANDLE_RE = /^[a-z0-9_]{3,20}$/;
+  const HANDLE_A = ['pale', 'hollow', 'grave', 'silent', 'cold', 'restless', 'lost', 'midnight', 'crooked', 'faded', 'sleepless', 'buried'];
+  const HANDLE_B = ['admin', 'root', 'daemon', 'ghoul', 'raven', 'moth', 'lantern', 'sysop', 'wisp', 'crow', 'tenant', 'janitor'];
+  const pick = a => a[Math.floor(Math.random() * a.length)];
+  const LAST_STATUS = {
+    banished: 'logged out. it let them go',
+    possessed: 'never logged out',
+    playing: 'still logged in',
+    disconnected: 'connection lost'
+  };
+  let net = { online: false };
+
+  function getHandle() {
+    const make = () => `${pick(HANDLE_A)}_${pick(HANDLE_B)}${Math.floor(Math.random() * 90 + 10)}`;
+    try {
+      let h = localStorage.getItem('crypt-handle');
+      if (!h || !HANDLE_RE.test(h)) { h = make(); localStorage.setItem('crypt-handle', h); }
+      return h;
+    } catch (e) { return make(); }
+  }
+  async function api(path, body) {
+    if (!API) return null;
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), 2500);
+    try {
+      const opts = body
+        ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), signal: ctl.signal }
+        : { signal: ctl.signal };
+      const r = await fetch(API + path, opts);
+      return r.ok ? await r.json() : null;
+    } catch (e) { return null; } finally { clearTimeout(timer); }
+  }
+  function cleanRecent(list) {
+    return (Array.isArray(list) ? list : []).filter(r =>
+      r && typeof r.handle === 'string' && HANDLE_RE.test(r.handle) && typeof r.started === 'number' && r.status in LAST_STATUS);
+  }
+  const nowSec = () => Date.now() / 1000 + (net.skew || 0);
+  function ago(ts) {
+    const s = Math.max(0, Math.floor(nowSec() - ts));
+    if (s < 60) return 'just now';
+    if (s < 3600) return `${Math.floor(s / 60)} min ago`;
+    if (s < 86400) return `${Math.floor(s / 3600)} hr ago`;
+    return `${Math.floor(s / 86400)} days ago`;
+  }
+  function when(ts) {
+    const d = new Date(ts * 1000);
+    const M = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return `${M[d.getMonth()]} ${String(d.getDate()).padStart(2, ' ')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  }
+  function ordinal(n) {
+    const s = ['th', 'st', 'nd', 'rd'], v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+  }
+  const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
+  const activeOthers = () => (net.recent || []).filter(r => r.status === 'playing' || r.status === 'possessed');
+
   /* ---------- filesystem ---------- */
   const F = (content, opts = {}) => Object.assign({ type: 'file', content, mode: 0o644, owner: 'mara' }, opts);
   const D = (children, opts = {}) => Object.assign({ type: 'dir', children, mode: 0o755, owner: 'root' }, opts);
@@ -679,11 +738,25 @@ HOLD HOLD HOLD HOLD HOLD HOLD HOLD HOLD HOLD HOLD HOLD HOLD HOLD`, { owner: 'it'
     },
     whoami: () => [(state.corruption >= 60 && Math.random() < 0.5) ? 'it' : 'you'],
     id: () => ['uid=1031(you) gid=1031(you) groups=1031(you),666(it)'],
-    who: () => ['you      pts/0        now', 'mara     pts/1        2019-10-31 03:33 (0.0.0.0)'],
+    who() {
+      const row = (u, tty, rest) => u.padEnd(20) + tty.padEnd(8) + rest;
+      const o = [row('you', 'pts/0', 'now'), row('mara', 'pts/1', '2019-10-31 03:33 (0.0.0.0)')];
+      activeOthers().slice(0, 5).forEach((r, i) =>
+        o.push(row(r.handle, 'pts/' + (i + 2), ago(r.started) + (r.status === 'possessed' ? '   (not responding)' : ''))));
+      return o;
+    },
     w: () => COMMANDS.who(),
-    last: () => ['you      pts/0    still logged in', 'mara     pts/1    Thu Oct 31 03:33   still logged in', 'it       ?        Thu Oct 31 03:33   still logged in'],
+    last() {
+      const row = (u, tty, t, s) => u.padEnd(20) + tty.padEnd(8) + t.padEnd(19) + s;
+      const o = [row('you', 'pts/0', 'now', 'still logged in')];
+      (net.recent || []).forEach((r, i) => o.push(row(r.handle, 'pts/' + (i + 2), when(r.started), LAST_STATUS[r.status])));
+      o.push(row('mara', 'pts/1', 'Oct 31 2019 03:33', 'still logged in'));
+      o.push(row('it', '?', 'Oct 31 2019 03:33', 'still logged in'));
+      if (net.online) o.push('', [`wtmp begins Thu Oct 31 03:33:00 2019. ${plural(net.stats.logins, 'login', 'logins')} since.`, 'dim']);
+      return o;
+    },
     date: () => [`Thu Oct 31 03:33:${String(state.commands % 60).padStart(2, '0')} EDT 2019`],
-    uptime: () => [' 03:33:00 up 2557 days,  3:33,  3 users,  load average: 6.66, 6.66, 6.66'],
+    uptime: () => [` 03:33:00 up 2557 days,  3:33,  ${3 + activeOthers().length} users,  load average: 6.66, 6.66, 6.66`],
     uname: args => [args.includes('-a') ? 'Linux crypt 6.6.6-hollow #1 SMP PREEMPT Thu Oct 31 03:33:00 2019 x86_64 GNU/Linux' : 'Linux'],
     hostname: () => ['crypt'],
     man(args) {
@@ -909,9 +982,15 @@ HOLD HOLD HOLD HOLD HOLD HOLD HOLD HOLD HOLD HOLD HOLD HOLD HOLD`, { owner: 'it'
     document.getElementById('ov-btn').focus();
   }
 
+  function report(outcome) {
+    if (!net.online || !net.token) return Promise.resolve(null);
+    return api('/result', { token: net.token, outcome, commands: state.commands });
+  }
+
   async function win() {
     state.over = true;
     $inputline.style.display = 'none';
+    const resP = report('banished');
     const seq = [
       ['You speak its name: MORGRAVE.', 'sys', 400],
       ['You speak the key: SAMHAIN.', 'sys', 900],
@@ -934,8 +1013,12 @@ HOLD HOLD HOLD HOLD HOLD HOLD HOLD HOLD HOLD HOLD HOLD HOLD HOLD`, { owner: 'it'
         localStorage.setItem('crypt-best', JSON.stringify(best));
       }
     } catch (e) { best = null; }
+    const res = await resP;
+    const shared = res && typeof res.rank === 'number'
+      ? `\n\nYou are the ${ordinal(res.rank)} admin to banish it.\nIt always comes back for the next one.`
+      : '';
     showOverlay('win', 'BANISHED',
-      'The wraith is gone. Mara\'s session finally closed.\nTicket #3133: resolved.',
+      'The wraith is gone. Mara\'s session finally closed.\nTicket #3133: resolved.' + shared,
       `time ${elapsed()}  ·  commands ${state.commands}  ·  corruption ${state.corruption}%` +
       (best ? `\nbest run: ${best.commands} commands (${best.time})` : ''));
   }
@@ -943,13 +1026,22 @@ HOLD HOLD HOLD HOLD HOLD HOLD HOLD HOLD HOLD HOLD HOLD HOLD HOLD`, { owner: 'it'
   async function lose() {
     state.over = true;
     $inputline.style.display = 'none';
+    const resP = report('possessed');
     await sleep(400);
     print([['it@crypt:~$ ', 'err']]);
     await sleep(900);
     print([['thank you for staying', 'whisper']]);
     await sleep(1200);
+    const res = await resP;
+    let shared = '';
+    if (res && res.stats && typeof res.stats.possessed === 'number') {
+      const others = res.stats.possessed - 1;
+      shared = others > 0
+        ? `\n\nYou join ${plural(others, 'other admin', 'other admins')} who never logged out.`
+        : '\n\nYou are the first one it kept.';
+    }
     showOverlay('lose', 'POSSESSED',
-      'You stayed too long. The prompt belongs to it now.\nSomeone will open a ticket about you, eventually.',
+      'You stayed too long. The prompt belongs to it now.\nSomeone will open a ticket about you, eventually.' + shared,
       `time ${elapsed()}  ·  commands ${state.commands}`);
   }
 
@@ -1019,18 +1111,43 @@ HOLD HOLD HOLD HOLD HOLD HOLD HOLD HOLD HOLD HOLD HOLD HOLD HOLD`, { owner: 'it'
     $overlay.className = '';
     $inputline.style.display = 'none';
     updateMeter();
-    const boot = [
+    net = { online: false, handle: getHandle() };
+    const loginP = api('/login', { handle: net.handle }).then(r => {
+      if (r && typeof r.token === 'string' && r.stats && typeof r.visitor === 'number') {
+        net = {
+          ...net, online: true, token: r.token, visitor: r.visitor, stats: r.stats,
+          recent: cleanRecent(r.recent), skew: typeof r.now === 'number' ? r.now - Date.now() / 1000 : 0
+        };
+      }
+    });
+    const play = async lines => { for (const [t, c, d] of lines) { await sleep(d); print([[t, c]]); } };
+    await play([
       ['$ ssh you@crypt.bensanders.net', 'cmd', 300],
       ['Connecting to crypt.bensanders.net (0.0.0.0)...', 'dim', 700],
       ['WARNING: the host key for crypt.bensanders.net has changed. Again.', 'err', 800],
-      ['you@crypt.bensanders.net\'s password: ********', 'dim', 900],
-      ['Last login: Thu Oct 31 03:33:00 2019 from 0.0.0.0', '', 700],
+      ['you@crypt.bensanders.net\'s password: ********', 'dim', 900]
+    ]);
+    await loginP;
+    const prev = (net.recent || [])[0];
+    const lastLogin = prev
+      ? `Last login: ${ago(prev.started)} by ${prev.handle}. ${prev.status === 'possessed' ? 'They never logged out.' : ''}`.trim()
+      : 'Last login: Thu Oct 31 03:33:00 2019 from 0.0.0.0';
+    const lines = [
+      [lastLogin, '', 700],
       ['', '', 200],
       [state.fs.children.etc.children.motd.content, 'sys', 400],
-      ['', '', 200],
-      ['Type \'help\' to see what you can do. Start with: cat readme.txt', 'dim', 500]
+      ['', '', 200]
     ];
-    for (const [t, c, d] of boot) { await sleep(d); print([[t, c]]); }
+    if (net.online) {
+      const s = net.stats;
+      lines.push(
+        [`You are visitor #${net.visitor} since it woke up.`, 'sys', 400],
+        [`${plural(s.banished, 'admin has', 'admins have')} banished it. ${s.possessed} never logged out.`, 'dim', 400],
+        ['', '', 200]
+      );
+    }
+    lines.push(['Type \'help\' to see what you can do. Start with: cat readme.txt', 'dim', 500]);
+    await play(lines);
     $inputline.style.display = 'flex';
     $prompt.textContent = promptText();
     $input.focus();
