@@ -1,0 +1,1188 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>I Wanna Be the Ghoul</title>
+<meta name="description" content="A very unfair Halloween platformer. Remember where the traps are.">
+<script async src="https://plausible.io/js/pa-JWiyAnkl2l96nMNDBD7OS.js"></script>
+<style>
+  :root {
+    --bg: #09070f;
+    --fg: #ece2f6;
+    --dim: #9a8bb0;
+    --orange: #ff8a1f;
+    --gold: #ffd36b;
+    --red: #ff3b4e;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--fg); }
+  body {
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    min-height: 100vh;
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    gap: 10px;
+  }
+  h1 { margin: 0; font-size: clamp(16px, 2.6vw, 24px); letter-spacing: 3px; color: var(--orange); text-transform: uppercase; }
+  #wrap {
+    position: relative;
+    width: min(1000px, calc(100vw - 24px), calc((100vh - 130px) * 800 / 608));
+    width: min(1000px, calc(100vw - 24px), calc((100svh - 130px) * 800 / 608));
+    aspect-ratio: 800 / 608;
+    border-radius: 6px;
+    overflow: hidden;
+    box-shadow: 0 0 0 1px #2a2238, 0 20px 60px rgba(0,0,0,.6);
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  canvas { display: block; width: 100%; height: 100%; image-rendering: pixelated; }
+  #hud {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    display: flex;
+    justify-content: space-between;
+    padding: 6px 10px;
+    font: 700 clamp(11px, 1.7vw, 15px) ui-monospace, Menlo, Consolas, monospace;
+    color: #cfc3e6;
+    text-shadow: 0 1px 3px #000;
+    pointer-events: none;
+  }
+  #screen {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: clamp(4px, 1.2vw, 12px);
+    padding: 16px;
+    background: rgba(6, 4, 12, .72);
+  }
+  #screen.show { display: flex; }
+  #screen.clear { background: transparent; }
+  #screen h2 { margin: 0; font-size: clamp(24px, 6vw, 60px); letter-spacing: 3px; color: var(--orange); text-shadow: 0 0 24px rgba(255,138,31,.45); }
+  #screen h2.over { color: var(--red); font-size: clamp(34px, 9vw, 92px); text-shadow: 0 0 30px rgba(255,59,78,.6), 3px 3px 0 #000; }
+  #screen p { margin: 0; font-size: clamp(12px, 1.8vw, 16px); max-width: 34em; line-height: 1.45; }
+  #screen .dim { color: var(--dim); }
+  #screen .gold { color: var(--gold); font-weight: 700; }
+  #screen .row { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; margin-top: 6px; }
+  #screen button {
+    background: transparent;
+    color: var(--gold);
+    border: 1px solid var(--gold);
+    border-radius: 6px;
+    padding: 8px 16px;
+    font: 700 clamp(12px, 1.8vw, 16px) system-ui, sans-serif;
+    cursor: pointer;
+  }
+  #screen button:hover, #screen button:focus-visible { background: var(--gold); color: #120c18; outline: none; }
+  #screen kbd {
+    font: 700 .9em ui-monospace, Menlo, Consolas, monospace;
+    border: 1px solid #4a3d63;
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 0 5px;
+    color: var(--fg);
+  }
+  #bar { display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap; color: var(--dim); font-size: 13px; }
+  #bar button {
+    background: transparent;
+    color: var(--fg);
+    border: 1px solid #3a2f4d;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font: inherit;
+    cursor: pointer;
+  }
+  #touch { display: none; width: min(1000px, calc(100vw - 24px)); justify-content: space-between; gap: 10px; touch-action: none; }
+  #touch .grp { display: flex; gap: 10px; }
+  #touch button {
+    width: 64px; height: 56px;
+    border-radius: 12px;
+    border: 1px solid #4a3d63;
+    background: rgba(60, 45, 85, .55);
+    color: var(--fg);
+    font: 700 15px system-ui, sans-serif;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  #touch button.on { background: rgba(255, 138, 31, .45); }
+  #touch button.small { width: 48px; }
+  @media (pointer: coarse) {
+    #touch { display: flex; }
+    #bar span { display: none; }
+    #wrap {
+      width: min(1000px, calc(100vw - 24px), calc((100vh - 200px) * 800 / 608));
+      width: min(1000px, calc(100vw - 24px), calc((100svh - 200px) * 800 / 608));
+    }
+  }
+  @media (pointer: coarse) and (max-height: 520px) {
+    h1 { display: none; }
+    body { padding: 6px; gap: 6px; flex-direction: row; flex-wrap: wrap; }
+    #wrap {
+      width: min(1000px, calc(100vw - 260px), calc((100vh - 60px) * 800 / 608));
+      width: min(1000px, calc(100vw - 260px), calc((100svh - 60px) * 800 / 608));
+    }
+    #touch { order: -1; width: auto; position: fixed; inset: auto 8px 8px 8px; pointer-events: none; }
+    #touch .grp { pointer-events: auto; }
+  }
+</style>
+</head>
+<body>
+  <h1>I Wanna Be the Ghoul</h1>
+  <div id="wrap">
+    <canvas id="game" aria-label="I Wanna Be the Ghoul game"></canvas>
+    <div id="hud"><span id="hud-room"></span><span id="hud-stats"></span></div>
+    <div id="screen"></div>
+  </div>
+  <div id="touch">
+    <div class="grp">
+      <button data-k="left" aria-label="Move left">◀</button>
+      <button data-k="right" aria-label="Move right">▶</button>
+      <button data-k="up" class="small" aria-label="Aim up">▲</button>
+    </div>
+    <div class="grp">
+      <button data-k="retry" class="small" aria-label="Retry">R</button>
+      <button data-k="shoot" aria-label="Shoot">SHOOT</button>
+      <button data-k="jump" aria-label="Jump">JUMP</button>
+    </div>
+  </div>
+  <div id="bar">
+    <button id="mute" type="button">Sound: on</button>
+    <span>← → move &nbsp; Z / Space jump (again in the air) &nbsp; X shoot &nbsp; hold ↑ to aim up &nbsp; R retry &nbsp; P pause</span>
+  </div>
+
+<script>
+(() => {
+  /* ================= constants ================= */
+  const W = 800, H = 608, T = 32, COLS = 25, ROWS = 19, STEP = 1 / 50;
+  const RUN = 3, GRAV = 0.4, MAXFALL = 9, JUMP1 = 8.5, JUMP2 = 7, CUT = 0.45;
+  const PW = 11, PH = 21;
+
+  const cv = document.getElementById('game');
+  const ctx = cv.getContext('2d');
+  const $screen = document.getElementById('screen');
+  const $room = document.getElementById('hud-room');
+  const $stats = document.getElementById('hud-stats');
+  const $mute = document.getElementById('mute');
+  const TAU = Math.PI * 2;
+  const rand = (a, b) => a + Math.random() * (b - a);
+
+  function resize() {
+    const r = cv.getBoundingClientRect();
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    cv.width = Math.max(1, Math.round(r.width * dpr));
+    cv.height = Math.max(1, Math.round(r.height * dpr));
+    ctx.setTransform(cv.width / W, 0, 0, cv.height / H, 0, 0);
+  }
+  window.addEventListener('resize', resize);
+
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } },
+    set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) { /* storage unavailable */ } }
+  };
+
+  /* ================= sound ================= */
+  let actx = null;
+  let muted = store.get('ghoul-muted', false);
+  function ensureAudio() {
+    if (actx) { if (actx.state === 'suspended') actx.resume(); return; }
+    try { actx = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { actx = null; }
+  }
+  function tone(freq, dur, type = 'square', vol = 0.035, slide = 0, delay = 0) {
+    if (muted || !actx) return;
+    const t = actx.currentTime + delay;
+    const o = actx.createOscillator(), gn = actx.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(freq, t);
+    if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, freq + slide), t + dur);
+    gn.gain.setValueAtTime(vol, t);
+    gn.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(gn).connect(actx.destination);
+    o.start(t);
+    o.stop(t + dur + 0.02);
+  }
+  const sfx = {
+    jump: () => tone(420, 0.09, 'square', 0.03, 260),
+    jump2: () => tone(620, 0.09, 'square', 0.03, 300),
+    shoot: () => tone(900, 0.04, 'square', 0.018, -300),
+    save: () => [660, 880, 1320].forEach((f, i) => tone(f, 0.08, 'triangle', 0.04, 0, i * 0.06)),
+    trap: () => tone(160, 0.25, 'sawtooth', 0.04, 220),
+    laugh: () => [300, 240, 300, 240].forEach((f, i) => tone(f, 0.08, 'square', 0.03, 0, i * 0.09)),
+    die: () => { tone(300, 0.6, 'sawtooth', 0.06, -250); tone(110, 0.7, 'square', 0.04, -60, 0.08); },
+    hit: () => tone(180, 0.05, 'square', 0.03, -60),
+    bossDie: () => [400, 300, 200, 120].forEach((f, i) => tone(f, 0.25, 'sawtooth', 0.05, -80, i * 0.15)),
+    win: () => [523, 659, 784, 1047, 784, 1047].forEach((f, i) => tone(f, 0.16, 'triangle', 0.05, 0, i * 0.13))
+  };
+  function setMuteLabel() { $mute.textContent = muted ? 'Sound: off' : 'Sound: on'; }
+  $mute.addEventListener('click', () => { muted = !muted; store.set('ghoul-muted', muted); setMuteLabel(); ensureAudio(); });
+  setMuteLabel();
+
+  /* ================= rooms =================
+     #  wall          ^ v < >  spikes        =  fake floor (crumbles)
+     i  invisible block (appears when you bump it)
+     S  save point    F  "save point"
+  */
+  const ROOMS = [
+    {
+      name: '1. The Graveyard Gate',
+      hint: 'Z or Space to jump. Press it again in the air.',
+      links: { right: 1 },
+      deco: 'tree',
+      map: [
+        '#########################',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#................##.....#',
+        '#................##......',
+        '#................##......',
+        '#..S......^^.....##......',
+        '#########################',
+        '#########################'
+      ],
+      objects: () => [
+        { type: 'fruit', x: 13.5 * T, y: 9 * T + 4, dir: 1, trig: p => p.cx > 11.2 * T },
+        { type: 'fruit', x: 15.6 * T, y: 8 * T + 10, dir: -1, trig: p => p.cx > 15 * T },
+        { type: 'pop', tx: 20, ty: 16, dir: '^', trig: p => p.cx > 19.3 * T }
+      ]
+    },
+    {
+      name: '2. The Spike Garden',
+      hint: 'Trust nothing.',
+      links: { left: 0, right: 2 },
+      map: [
+        '#########################',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.........==............#',
+        '#........................',
+        '......#.......#...#......',
+        '..S...#.......#...#......',
+        '....^^#^^^^^^^#^^^#^^####',
+        '#########################',
+        '#########################'
+      ],
+      objects: () => [
+        { type: 'fallspike', x: 18 * T, y: 1 * T, trig: p => p.cx > 17.4 * T && p.cx < 18.8 * T }
+      ]
+    },
+    {
+      name: '3. A Lovely Night',
+      hint: 'What a beautiful moon.',
+      links: { left: 1, right: 3 },
+      map: [
+        '#########################',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '.........................',
+        '.....................F...',
+        '.......^.......^^........',
+        '#########################',
+        '#########################',
+        '#########################'
+      ],
+      objects: () => [
+        { type: 'moon', x: 620, y: 110, r: 56, trig: p => p.cx > 330 }
+      ]
+    },
+    {
+      name: '4. The Belfry',
+      hint: 'Up.',
+      links: { left: 2, up: 4 },
+      map: [
+        '##########....###########',
+        '#.........i.............#',
+        '#.......................#',
+        '#........###...........<#',
+        '#......................<#',
+        '#>.....................<#',
+        '#>.....................<#',
+        '#>..###................<#',
+        '#>..vvv................<#',
+        '#>.....................<#',
+        '#>.......###...........<#',
+        '#>.....................<#',
+        '#>.....................<#',
+        '....###................<#',
+        '.......................<#',
+        '........................#',
+        '#########################',
+        '#########################',
+        '#########################'
+      ],
+      objects: () => []
+    },
+    {
+      name: '5. Almost Out',
+      hint: 'The exit is right there!',
+      links: { down: 3, right: 5 },
+      deco: 'exit',
+      map: [
+        '#########################',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#........................',
+        '#........................',
+        '#.................^^.....',
+        '##########....###########',
+        '##########....###########'
+      ],
+      objects: () => [
+        { type: 'slider', x: 0, ty0: 13, ty1: 16, speed: 2.8, trig: p => p.cx > 15 * T },
+        { type: 'fallspike', x: 21 * T, y: 1 * T, trig: p => p.cx > 19.5 * T }
+      ]
+    },
+    {
+      name: '6. The Pumpkin King',
+      hint: '',
+      links: { left: 4 },
+      boss: true,
+      map: [
+        '#########################',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#.......................#',
+        '#..####..........####...#',
+        '........................#',
+        '........................#',
+        '..S.....................#',
+        '#########################',
+        '#########################'
+      ],
+      objects: () => []
+    }
+  ];
+
+  // static star fields per room so they don't jump around between deaths
+  const STARS = ROOMS.map(() => Array.from({ length: 55 }, () => ({ x: Math.random() * W, y: Math.random() * 380, s: Math.random() < 0.2 ? 2 : 1, p: Math.random() * TAU })));
+
+  /* ================= state ================= */
+  const START = { room: 0, x: 3 * T + 10, y: 17 * T - PH };
+  let state = 'title';   // title | play | dead | paused | won
+  let room, p, save, deaths, frames;
+  let parts = [];
+  const keys = { left: false, right: false, up: false, jump: false, shoot: false };
+  let jumpPressed = false, jumpReleased = false, shootCool = 0;
+
+  function loadProgress() {
+    const d = store.get('ghoul-progress', null);
+    if (d && d.save && ROOMS[d.save.room]) return d;
+    return null;
+  }
+  function persist() { store.set('ghoul-progress', { save, deaths, frames }); }
+
+  function newPlayer(x, y) {
+    return { x, y, w: PW, h: PH, vx: 0, vy: 0, onGround: false, djump: true, face: 1, anim: 0 };
+  }
+
+  function loadRoom(i) {
+    const R = ROOMS[i];
+    room = {
+      i, def: R, t: 0,
+      tiles: R.map.map(r => r.split('')),
+      shown: {}, crumble: {},
+      objs: R.objects().map(o => Object.assign({ state: 'idle' }, o)),
+      saves: [], bullets: [], seeds: [], corn: [], warns: [],
+      boss: null, gate: false, trophy: null, msg: null
+    };
+    for (let y = 0; y < ROWS; y++) {
+      for (let x = 0; x < COLS; x++) {
+        const c = room.tiles[y][x];
+        if (c === 'S' || c === 'F') { room.saves.push({ tx: x, ty: y, fake: c === 'F', revealed: false }); room.tiles[y][x] = '.'; }
+      }
+    }
+    for (const o of room.objs) {
+      if (o.type === 'fruit') { o.ax = o.x; o.ay = o.y - 60; o.vy = 0; }
+      if (o.type === 'fallspike') o.vy = 0;
+      if (o.type === 'pop') o.rise = 0;
+      if (o.type === 'moon') { o.sp = 0; }
+    }
+    if (R.boss) {
+      room.boss = { x: 610, y: 320, r: 46, dir: -1, t: 0, hp: 40, max: 40, cool: 90, rain: 160, flash: 0, state: 'wait', intro: 0 };
+    }
+    $room.textContent = R.name;
+  }
+
+  /* ================= tiles & collision ================= */
+  const key = (x, y) => x + ',' + y;
+  function tileAt(tx, ty) {
+    tx = Math.max(0, Math.min(COLS - 1, tx));
+    ty = Math.max(0, Math.min(ROWS - 1, ty));
+    return room.tiles[ty][tx];
+  }
+  const isSolid = c => c === '#' || c === '=' || c === 'i';
+  const isSpike = c => c === '^' || c === 'v' || c === '<' || c === '>';
+
+  function hitSolid(x, y, w, h) {
+    const x0 = Math.floor(x / T), x1 = Math.floor((x + w - 0.001) / T);
+    const y0 = Math.floor(y / T), y1 = Math.floor((y + h - 0.001) / T);
+    for (let ty = y0; ty <= y1; ty++) {
+      for (let tx = x0; tx <= x1; tx++) {
+        const c = tileAt(tx, ty);
+        if (isSolid(c)) {
+          if (c === 'i' && !room.shown[key(tx, ty)]) { room.shown[key(tx, ty)] = true; sfx.trap(); }
+          return { tx, ty, c };
+        }
+      }
+    }
+    return null;
+  }
+
+  function spikeTri(px, py, dir) {
+    if (dir === '^') return [[px + 1, py + 32], [px + 16, py + 2], [px + 31, py + 32]];
+    if (dir === 'v') return [[px + 1, py], [px + 16, py + 30], [px + 31, py]];
+    if (dir === '>') return [[px, py + 1], [px + 30, py + 16], [px, py + 31]];
+    return [[px + 32, py + 1], [px + 2, py + 16], [px + 32, py + 31]];
+  }
+  function triRect(t, r) {
+    const rp = [[r.x, r.y], [r.x + r.w, r.y], [r.x, r.y + r.h], [r.x + r.w, r.y + r.h]];
+    const axes = [[1, 0], [0, 1]];
+    for (let i = 0; i < 3; i++) {
+      const a = t[i], b = t[(i + 1) % 3];
+      axes.push([-(b[1] - a[1]), b[0] - a[0]]);
+    }
+    for (const ax of axes) {
+      let tmin = Infinity, tmax = -Infinity, rmin = Infinity, rmax = -Infinity;
+      for (const q of t) { const d = q[0] * ax[0] + q[1] * ax[1]; if (d < tmin) tmin = d; if (d > tmax) tmax = d; }
+      for (const q of rp) { const d = q[0] * ax[0] + q[1] * ax[1]; if (d < rmin) rmin = d; if (d > rmax) rmax = d; }
+      if (tmax <= rmin || rmax <= tmin) return false;
+    }
+    return true;
+  }
+  function circRect(cx, cy, r, rc) {
+    const nx = Math.max(rc.x, Math.min(cx, rc.x + rc.w));
+    const ny = Math.max(rc.y, Math.min(cy, rc.y + rc.h));
+    const dx = cx - nx, dy = cy - ny;
+    return dx * dx + dy * dy < r * r;
+  }
+  const rectsHit = (a, b) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
+
+  /* ================= particles ================= */
+  function burst(x, y, colors, n, spd, grav = 0.25) {
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * TAU, s = rand(spd * 0.3, spd);
+      parts.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s - 1.5, life: rand(30, 70), max: 70, c: colors[i % colors.length], s: rand(2, 4), g: grav });
+    }
+  }
+
+  /* ================= player ================= */
+  function updatePlayer() {
+    const pl = p;
+    const dir = (keys.right ? 1 : 0) - (keys.left ? 1 : 0);
+    pl.vx = dir * RUN;
+    if (dir) pl.face = dir;
+
+    if (jumpPressed) {
+      if (pl.onGround) { pl.vy = -JUMP1; pl.onGround = false; pl.djump = true; sfx.jump(); }
+      else if (pl.djump) { pl.vy = -JUMP2; pl.djump = false; sfx.jump2(); burst(pl.x + 5, pl.y + 20, ['#bdb3d6'], 4, 1.5, 0.05); }
+      jumpPressed = false;
+    }
+    if (jumpReleased) { if (pl.vy < 0) pl.vy *= CUT; jumpReleased = false; }
+
+    pl.vy = Math.min(MAXFALL, pl.vy + GRAV);
+
+    // horizontal
+    pl.x += pl.vx;
+    let hit = hitSolid(pl.x, pl.y, pl.w, pl.h);
+    if (hit) pl.x = pl.vx > 0 ? hit.tx * T - pl.w : (hit.tx + 1) * T;
+
+    // vertical
+    pl.y += pl.vy;
+    hit = hitSolid(pl.x, pl.y, pl.w, pl.h);
+    const wasGround = pl.onGround;
+    pl.onGround = false;
+    if (hit) {
+      if (pl.vy > 0) {
+        pl.y = hit.ty * T - pl.h;
+        pl.onGround = true;
+        pl.djump = true;
+        // fake floor under either foot starts crumbling
+        for (const tx of [Math.floor(pl.x / T), Math.floor((pl.x + pl.w - 0.001) / T)]) {
+          if (tileAt(tx, hit.ty) === '=' && room.crumble[key(tx, hit.ty)] === undefined) room.crumble[key(tx, hit.ty)] = 7;
+        }
+      } else {
+        pl.y = (hit.ty + 1) * T;
+      }
+      pl.vy = 0;
+    }
+    if (!wasGround && pl.onGround) pl.anim = 0;
+    if (pl.onGround && pl.vx) pl.anim += 0.25;
+
+    // shooting
+    if (shootCool > 0) shootCool--;
+    if (keys.shoot && shootCool === 0 && room.bullets.length < 6) {
+      if (keys.up && dir) {
+        // up + running: diagonal shot from the front of the hat
+        room.bullets.push({ x: pl.face > 0 ? pl.x + pl.w : pl.x, y: pl.y + 2, vx: pl.face * 6.4, vy: -6.4 });
+      } else if (keys.up) {
+        // up while standing or jumping: straight up
+        room.bullets.push({ x: pl.x + pl.w / 2, y: pl.y - 4, vx: 0, vy: -9 });
+      } else {
+        room.bullets.push({ x: pl.face > 0 ? pl.x + pl.w : pl.x - 6, y: pl.y + 11, vx: pl.face * 9, vy: 0 });
+      }
+      shootCool = 7;
+      sfx.shoot();
+    }
+
+    // room transitions
+    const L = room.def.links;
+    if (pl.x + pl.w / 2 > W && L.right !== undefined) { loadRoom(L.right); pl.x -= W; }
+    else if (pl.x + pl.w / 2 < 0 && L.left !== undefined) { loadRoom(L.left); pl.x += W; }
+    if (pl.y + pl.h / 2 < 0 && L.up !== undefined) { loadRoom(L.up); pl.y += H; pl.vy = Math.min(pl.vy, -JUMP1); pl.djump = true; }
+    if (pl.y > H) {
+      if (L.down !== undefined) { loadRoom(L.down); pl.y -= H; }
+      else die();
+    }
+  }
+
+  /* ================= traps ================= */
+  function updateObjects() {
+    const pc = p ? { cx: p.x + p.w / 2, cy: p.y + p.h / 2 } : { cx: -999, cy: -999 };
+    const alive = state === 'play';
+    for (const o of room.objs) {
+      if (o.state === 'idle' && alive && o.trig && o.trig(pc)) {
+        o.state = 'go';
+        if (o.type !== 'fruit' || o.dir < 0) sfx.trap();
+      }
+      if (o.state !== 'go') continue;
+      if (o.type === 'fruit') { o.vy += 0.6 * o.dir; o.y += o.vy; }
+      else if (o.type === 'pop') { o.rise = Math.min(1, o.rise + 0.34); }
+      else if (o.type === 'fallspike') { o.vy = Math.min(13, o.vy + 0.7); o.y += o.vy; }
+      else if (o.type === 'slider') { o.x += o.speed; }
+      else if (o.type === 'moon') {
+        if (!o.dx) {
+          const tx = pc.cx - 30, ty = 17 * T;
+          const d = Math.hypot(tx - o.x, ty - o.y) || 1;
+          o.dx = (tx - o.x) / d; o.dy = (ty - o.y) / d;
+        }
+        o.sp = Math.min(10, o.sp + 0.28);
+        o.x += o.dx * o.sp; o.y += o.dy * o.sp;
+      }
+    }
+    // crumbling floor
+    for (const k in room.crumble) {
+      if (--room.crumble[k] <= 0) {
+        const [x, y] = k.split(',').map(Number);
+        room.tiles[y][x] = '.';
+        delete room.crumble[k];
+        burst(x * T + 16, y * T + 16, ['#2a2238', '#3d3352'], 10, 2.5);
+      }
+    }
+  }
+
+  function updateBullets() {
+    for (const b of room.bullets) {
+      b.x += b.vx;
+      b.y += b.vy;
+      if (b.x < -10 || b.x > W + 10 || b.y < -10 || b.y > H + 10 || isSolid(tileAt(Math.floor(b.x / T), Math.floor(b.y / T)))) { b.dead = true; continue; }
+      for (const s of room.saves) {
+        if (b.x > s.tx * T && b.x < s.tx * T + T && b.y > s.ty * T && b.y < s.ty * T + T) { b.dead = true; useSave(s); }
+      }
+      const bo = room.boss;
+      if (bo && bo.state === 'fight' && Math.hypot(b.x - bo.x, b.y - bo.y) < bo.r) {
+        b.dead = true; bo.hp--; bo.flash = 4; sfx.hit();
+        burst(b.x, b.y, ['#ff8a1f', '#ffd36b'], 3, 2);
+        if (bo.hp <= 0) killBoss();
+      }
+    }
+    room.bullets = room.bullets.filter(b => !b.dead);
+  }
+
+  function useSave(s) {
+    if (s.fake) {
+      if (!s.revealed) { s.revealed = true; sfx.laugh(); room.msg = { text: 'nope', t: 70, x: s.tx * T + 16, y: s.ty * T - 10 }; }
+      return;
+    }
+    const nx = s.tx * T + 10, ny = (s.ty + 1) * T - PH;
+    if (save.room === room.i && save.x === nx && save.y === ny) return;
+    save = { room: room.i, x: nx, y: ny };
+    persist();
+    sfx.save();
+    room.msg = { text: 'SAVED', t: 60, x: s.tx * T + 16, y: s.ty * T - 10 };
+  }
+
+  /* ================= boss ================= */
+  function updateBoss() {
+    const bo = room.boss;
+    if (!bo) return;
+    if (!room.gate && p && state === 'play' && p.x > 4 * T) {
+      room.gate = true;
+      for (const y of [14, 15, 16]) room.tiles[y][0] = '#';
+      bo.state = 'intro'; bo.intro = 80;
+      sfx.trap();
+    }
+    if (bo.state === 'intro' && --bo.intro <= 0) bo.state = 'fight';
+    if (bo.flash > 0) bo.flash--;
+    if (bo.state === 'fight') {
+      bo.t++;
+      const enraged = bo.hp <= bo.max / 2;
+      bo.x += bo.dir * (enraged ? 3.4 : 2.4);
+      if (bo.x < 90) { bo.x = 90; bo.dir = 1; }
+      if (bo.x > 710) { bo.x = 710; bo.dir = -1; }
+      bo.y = enraged ? 300 + Math.sin(bo.t * 0.05) * 150 : 330 + Math.sin(bo.t * 0.035) * 110;
+      if (--bo.cool <= 0) {
+        const n = enraged ? 7 : 5, spread = enraged ? 1.2 : 0.9, sp = enraged ? 4.4 : 3.6;
+        const base = Math.atan2(p.y + p.h / 2 - bo.y, p.x + p.w / 2 - bo.x);
+        for (let i = 0; i < n; i++) {
+          const a = base + (i / (n - 1) - 0.5) * spread;
+          room.seeds.push({ x: bo.x, y: bo.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp });
+        }
+        bo.cool = enraged ? 62 : 92;
+        tone(220, 0.1, 'square', 0.03, -80);
+      }
+      if (enraged && --bo.rain <= 0) {
+        for (let i = 0; i < 5; i++) room.warns.push({ x: 60 + i * 170 + rand(-40, 40), t: 45 });
+        bo.rain = 150;
+      }
+    }
+    for (const s of room.seeds) {
+      s.x += s.vx; s.y += s.vy;
+      if (s.x < -10 || s.x > W + 10 || s.y < -10 || s.y > H + 10 || isSolid(tileAt(Math.floor(s.x / T), Math.floor(s.y / T)))) s.dead = true;
+    }
+    room.seeds = room.seeds.filter(s => !s.dead);
+    for (const w of room.warns) if (--w.t <= 0) { w.dead = true; room.corn.push({ x: w.x, y: -16, vy: 2 }); }
+    room.warns = room.warns.filter(w => !w.dead);
+    for (const c of room.corn) { c.vy += 0.35; c.y += c.vy; if (c.y > H + 20) c.dead = true; }
+    room.corn = room.corn.filter(c => !c.dead);
+  }
+
+  function killBoss() {
+    const bo = room.boss;
+    bo.state = 'dead';
+    room.seeds = []; room.corn = []; room.warns = [];
+    burst(bo.x, bo.y, ['#ff8a1f', '#e8661c', '#ffd36b', '#4c6b2a'], 70, 7, 0.18);
+    sfx.bossDie();
+    room.trophy = { x: 400, y: 17 * T - 30 };
+    room.msg = { text: 'THE PUMPKIN KING HAS BEEN CARVED', t: 200, x: 400, y: 160 };
+  }
+
+  /* ================= hazards ================= */
+  function checkHazards() {
+    const r = { x: p.x + 1, y: p.y + 1, w: p.w - 2, h: p.h - 2 };
+    const x0 = Math.floor(r.x / T), x1 = Math.floor((r.x + r.w) / T);
+    const y0 = Math.floor(r.y / T), y1 = Math.floor((r.y + r.h) / T);
+    for (let ty = y0; ty <= y1; ty++) {
+      for (let tx = x0; tx <= x1; tx++) {
+        const c = tileAt(tx, ty);
+        if (isSpike(c) && triRect(spikeTri(tx * T, ty * T, c), r)) return die();
+      }
+    }
+    for (const o of room.objs) {
+      if (o.type === 'fruit' && circRect(o.x, o.y, 10, r)) return die();
+      if (o.type === 'pop' && o.rise > 0) {
+        const px = o.tx * T, py = o.ty * T;
+        const tri = [[px + 1, py + 32], [px + 16, py + 32 - 30 * o.rise], [px + 31, py + 32]];
+        if (triRect(tri, r)) return die();
+      }
+      if (o.type === 'fallspike' && triRect(spikeTri(o.x, o.y, 'v'), r)) return die();
+      if (o.type === 'slider' && o.state === 'go') {
+        if (rectsHit(r, { x: o.x - 40, y: o.ty0 * T, w: 40, h: (o.ty1 - o.ty0 + 1) * T })) return die();
+        for (let ty = o.ty0; ty <= o.ty1; ty++) if (triRect(spikeTri(o.x, ty * T, '>'), r)) return die();
+      }
+      if (o.type === 'moon' && circRect(o.x, o.y, o.r - 4, r)) return die();
+    }
+    for (const s of room.saves) {
+      const sr = { x: s.tx * T + 6, y: s.ty * T + 4, w: 20, h: 28 };
+      if (rectsHit(r, sr)) { if (s.fake) return die(); useSave(s); }
+    }
+    const bo = room.boss;
+    if (bo && (bo.state === 'fight' || bo.state === 'intro') && circRect(bo.x, bo.y, bo.r - 4, r)) return die();
+    for (const s of room.seeds) if (circRect(s.x, s.y, 5, r)) return die();
+    for (const c of room.corn) if (triRect([[c.x - 9, c.y - 12], [c.x + 9, c.y - 12], [c.x, c.y + 12]], r)) return die();
+    if (room.trophy && circRect(room.trophy.x, room.trophy.y, 16, r)) win();
+  }
+
+  /* ================= flow ================= */
+  function showScreen(html, cls = '') { $screen.innerHTML = html; $screen.className = 'show ' + cls; }
+  function hideScreen() { $screen.className = ''; }
+  const fmtTime = f => { const s = Math.floor(f / 50); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
+
+  function titleScreen() {
+    state = 'title';
+    const prog = loadProgress();
+    const best = store.get('ghoul-best', null);
+    deaths = 0; frames = 0; save = { ...START };
+    loadRoom(0);
+    p = newPlayer(START.x, START.y);
+    showScreen(`
+      <h2>I WANNA BE THE GHOUL</h2>
+      <p>Six rooms. One Pumpkin King. An unreasonable number of spikes.</p>
+      <p class="dim"><kbd>←</kbd> <kbd>→</kbd> move &nbsp; <kbd>Z</kbd> / <kbd>Space</kbd> jump, again in the air &nbsp; <kbd>X</kbd> shoot &nbsp; hold <kbd>↑</kbd> to aim up &nbsp; <kbd>R</kbd> retry<br>
+      Touch or shoot a tombstone to save. You will die a lot. That's the game.</p>
+      ${best ? `<p class="gold">Cleared! Best: ${best.deaths} deaths, ${fmtTime(best.frames)}</p>` : ''}
+      <div class="row">
+        ${prog ? `<button type="button" data-act="continue">Continue (${prog.deaths} deaths)</button>` : ''}
+        <button type="button" data-act="new">${prog ? 'New game' : 'Start'}</button>
+      </div>`);
+    const first = $screen.querySelector('button');
+    if (first) first.focus();
+  }
+
+  function startGame(cont) {
+    ensureAudio();
+    const prog = cont ? loadProgress() : null;
+    if (prog) { save = prog.save; deaths = prog.deaths; frames = prog.frames || 0; }
+    else { save = { ...START }; deaths = 0; frames = 0; persist(); }
+    respawn();
+  }
+
+  function respawn() {
+    hideScreen();
+    loadRoom(save.room);
+    p = newPlayer(save.x, save.y);
+    parts = [];
+    jumpPressed = false; jumpReleased = false;
+    state = 'play';
+  }
+
+  function die() {
+    if (state !== 'play') return;
+    state = 'dead';
+    deaths++;
+    persist();
+    sfx.die();
+    burst(p.x + 5, p.y + 10, ['#ff3b4e', '#c4142c', '#ff8a1f', '#7a1d8f'], 60, 6, 0.3);
+    setTimeout(() => {
+      if (state === 'dead') showScreen('<h2 class="over">GAME OVER</h2><p>Press <kbd>R</kbd> to try again</p>', 'clear');
+    }, 450);
+  }
+
+  function win() {
+    if (state !== 'play') return;
+    state = 'won';
+    sfx.win();
+    burst(room.trophy.x, room.trophy.y, ['#ffd36b', '#ff8a1f', '#fff'], 50, 6, 0.15);
+    room.trophy = null;
+    const best = store.get('ghoul-best', null);
+    const isBest = !best || deaths < best.deaths || (deaths === best.deaths && frames < best.frames);
+    if (isBest) store.set('ghoul-best', { deaths, frames });
+    store.set('ghoul-progress', null);
+    setTimeout(() => showScreen(`
+      <h2>YOU ARE THE GHOUL</h2>
+      <p>The Pumpkin King is pie now.</p>
+      <p class="gold">${deaths} deaths &nbsp;·&nbsp; ${fmtTime(frames)}${isBest ? ' &nbsp;·&nbsp; new best!' : ''}</p>
+      <p class="dim">Thanks for playing.</p>
+      <div class="row"><button type="button" data-act="title">Back to title</button></div>`), 900);
+  }
+
+  function pause() { if (state === 'play') { state = 'paused'; showScreen('<h2>PAUSED</h2><p class="dim">Press <kbd>P</kbd> or tap to resume</p>'); } }
+  function resume() { if (state === 'paused') { state = 'play'; hideScreen(); } }
+
+  $screen.addEventListener('click', e => {
+    const act = e.target.closest('button') && e.target.closest('button').dataset.act;
+    if (act === 'new') startGame(false);
+    else if (act === 'continue') startGame(true);
+    else if (act === 'title') titleScreen();
+    else if (state === 'paused') resume();
+    else if (state === 'dead') respawn();
+  });
+
+  /* ================= input ================= */
+  const KEYMAP = {
+    ArrowLeft: 'left', KeyA: 'left', ArrowRight: 'right', KeyD: 'right',
+    Space: 'jump', KeyZ: 'jump', ShiftLeft: 'jump', ShiftRight: 'jump',
+    ArrowUp: 'up', KeyW: 'up',
+    KeyX: 'shoot', KeyJ: 'shoot'
+  };
+  function press(k) {
+    ensureAudio();
+    if (k === 'retry') { if (state === 'play' || state === 'dead') respawn(); return; }
+    if (k === 'jump') {
+      if (state === 'title') { startGame(!!loadProgress()); return; }
+      if (state === 'dead') { respawn(); return; }
+      if (state === 'paused') { resume(); return; }
+      if (!keys.jump) jumpPressed = true;
+    }
+    keys[k] = true;
+  }
+  function release(k) {
+    if (k === 'jump' && keys.jump) jumpReleased = true;
+    if (k in keys) keys[k] = false;
+  }
+  window.addEventListener('keydown', e => {
+    if (e.code === 'KeyR') { e.preventDefault(); press('retry'); return; }
+    if (e.code === 'KeyP' || e.code === 'Escape') { if (state === 'play') pause(); else resume(); return; }
+    if (e.code === 'Enter' && state === 'title') { startGame(!!loadProgress()); return; }
+    const k = KEYMAP[e.code];
+    if (!k) return;
+    e.preventDefault();
+    if (e.repeat) return;
+    if (document.activeElement && document.activeElement.tagName === 'BUTTON' && (e.code === 'Space' || e.code === 'Enter')) document.activeElement.blur();
+    press(k);
+  });
+  window.addEventListener('keyup', e => { const k = KEYMAP[e.code]; if (k) release(k); });
+  window.addEventListener('blur', () => { for (const k in keys) release(k); pause(); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
+
+  for (const b of document.querySelectorAll('#touch button')) {
+    const k = b.dataset.k;
+    b.addEventListener('pointerdown', e => { e.preventDefault(); b.setPointerCapture(e.pointerId); b.classList.add('on'); press(k); });
+    const up = () => { b.classList.remove('on'); release(k); };
+    b.addEventListener('pointerup', up);
+    b.addEventListener('pointercancel', up);
+    b.addEventListener('lostpointercapture', up);
+    b.addEventListener('contextmenu', e => e.preventDefault());
+  }
+
+  /* ================= step ================= */
+  function step() {
+    if (state === 'play' || state === 'dead') frames++;
+    room.t++;
+    if (state === 'play') updatePlayer();
+    if (state === 'play' || state === 'dead' || state === 'won') {
+      updateObjects();
+      updateBullets();
+      updateBoss();
+    }
+    if (state === 'play') checkHazards();
+    for (const q of parts) { q.vy += q.g; q.x += q.vx; q.y += q.vy; q.life--; }
+    parts = parts.filter(q => q.life > 0);
+    if (room.msg && --room.msg.t <= 0) room.msg = null;
+    if (state === 'play' && frames % 250 === 0) persist();
+  }
+
+  /* ================= drawing ================= */
+  function drawBackground(time) {
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, '#0c0818');
+    g.addColorStop(1, '#22132f');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+    for (const s of STARS[room.i]) {
+      ctx.globalAlpha = 0.4 + 0.35 * Math.sin(time * 1.5 + s.p);
+      ctx.fillStyle = '#e8e0ff';
+      ctx.fillRect(Math.round(s.x), Math.round(s.y), s.s, s.s);
+    }
+    ctx.globalAlpha = 1;
+    if (room.def.deco === 'tree') {
+      ctx.strokeStyle = '#140e1d';
+      ctx.lineCap = 'round';
+      const seg = (x1, y1, x2, y2, w) => { ctx.lineWidth = w; ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); };
+      seg(14.6 * T, 17 * T, 14.4 * T, 9 * T, 14);
+      seg(14.4 * T, 10 * T, 12.6 * T, 7.4 * T, 7);
+      seg(14.4 * T, 9.5 * T, 16.6 * T, 6.8 * T, 7);
+      seg(12.6 * T, 7.4 * T, 11.8 * T, 6.6 * T, 4);
+      seg(16.6 * T, 6.8 * T, 17.4 * T, 6.2 * T, 4);
+      seg(14.4 * T, 9 * T, 14.8 * T, 6 * T, 5);
+    }
+    if (room.def.deco === 'exit') {
+      ctx.fillStyle = '#3b2f52';
+      ctx.fillRect(21 * T, 11 * T, 64, 26);
+      ctx.fillStyle = '#7dff9a';
+      ctx.font = 'bold 15px ui-monospace, monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('EXIT →', 22 * T, 11 * T + 18);
+      ctx.fillStyle = '#2a2238';
+      ctx.fillRect(22 * T - 2, 11 * T + 26, 4, 3 * T - 26 + 32);
+    }
+    if (room.def.hint) {
+      ctx.fillStyle = 'rgba(207, 195, 230, .55)';
+      ctx.font = '14px ui-monospace, Menlo, Consolas, monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(room.def.hint, W / 2, 64);
+    }
+  }
+
+  function drawTiles() {
+    for (let y = 0; y < ROWS; y++) {
+      for (let x = 0; x < COLS; x++) {
+        const c = room.tiles[y][x];
+        const px = x * T, py = y * T;
+        if (c === '#' || c === '=' || (c === 'i' && room.shown[key(x, y)])) {
+          let ox = 0;
+          if (c === '=' && room.crumble[key(x, y)] !== undefined) ox = rand(-2, 2);
+          ctx.fillStyle = c === 'i' ? '#4a3a66' : '#2a2238';
+          ctx.fillRect(px + ox, py, T, T);
+          ctx.fillStyle = 'rgba(0,0,0,.25)';
+          ctx.fillRect(px + ox, py + 15, T, 2);
+          ctx.fillRect(px + ox + (y % 2 ? 8 : 22), py, 2, 15);
+          ctx.fillRect(px + ox + (y % 2 ? 22 : 8), py + 17, 2, 15);
+          const above = y > 0 ? room.tiles[y - 1][x] : '#';
+          if (!isSolid(above)) { ctx.fillStyle = '#463a5e'; ctx.fillRect(px + ox, py, T, 3); }
+        } else if (isSpike(c)) {
+          drawSpike(px, py, c, 1);
+        }
+      }
+    }
+  }
+  function drawSpike(px, py, dir, rise) {
+    let t = spikeTri(px, py, dir);
+    if (dir === '^' && rise < 1) t = [[px + 1, py + 32], [px + 16, py + 32 - 30 * rise], [px + 31, py + 32]];
+    ctx.fillStyle = '#d7dbe6';
+    ctx.beginPath(); ctx.moveTo(t[0][0], t[0][1]); ctx.lineTo(t[1][0], t[1][1]); ctx.lineTo(t[2][0], t[2][1]); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = 'rgba(0,0,0,.25)';
+    ctx.beginPath(); ctx.moveTo(t[1][0], t[1][1]); ctx.lineTo(t[2][0], t[2][1]); ctx.lineTo((t[0][0] + t[2][0]) / 2, (t[0][1] + t[2][1]) / 2); ctx.closePath(); ctx.fill();
+  }
+
+  function drawPumpkin(x, y, r, time, face = true) {
+    ctx.fillStyle = '#e8661c';
+    ctx.beginPath(); ctx.ellipse(x, y, r, r * 0.85, 0, 0, TAU); ctx.fill();
+    ctx.strokeStyle = '#b8480f';
+    ctx.lineWidth = Math.max(1, r / 8);
+    ctx.beginPath(); ctx.ellipse(x, y, r * 0.4, r * 0.85, 0, 0, TAU); ctx.stroke();
+    ctx.fillStyle = '#4c6b2a';
+    ctx.fillRect(x - r * 0.12, y - r * 1.05, r * 0.24, r * 0.35);
+    if (face) {
+      ctx.fillStyle = '#ffd36b';
+      ctx.fillRect(x - r * 0.45, y - r * 0.25, r * 0.25, r * 0.2);
+      ctx.fillRect(x + r * 0.2, y - r * 0.25, r * 0.25, r * 0.2);
+      ctx.fillRect(x - r * 0.4, y + r * 0.2, r * 0.8, r * 0.15);
+    }
+  }
+
+  function drawObjects(time) {
+    for (const o of room.objs) {
+      if (o.type === 'fruit') {
+        const sway = o.state === 'idle' ? Math.sin(time * 2 + o.ax) * 2 : 0;
+        if (o.state === 'idle') {
+          ctx.strokeStyle = '#3c5a24'; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.moveTo(o.ax, o.ay); ctx.lineTo(o.x + sway, o.y - 9); ctx.stroke();
+        }
+        drawPumpkin(o.x + sway, o.y, 10, time);
+      } else if (o.type === 'pop' && o.rise > 0) {
+        drawSpike(o.tx * T, o.ty * T, '^', o.rise);
+      } else if (o.type === 'fallspike') {
+        drawSpike(o.x, o.y, 'v', 1);
+      } else if (o.type === 'slider' && o.state === 'go') {
+        ctx.fillStyle = '#1a1424';
+        ctx.fillRect(o.x - 40, o.ty0 * T, 40, (o.ty1 - o.ty0 + 1) * T);
+        for (let ty = o.ty0; ty <= o.ty1; ty++) drawSpike(o.x, ty * T, '>', 1);
+      } else if (o.type === 'moon') {
+        const gl = ctx.createRadialGradient(o.x, o.y, o.r * 0.6, o.x, o.y, o.r * 2.2);
+        gl.addColorStop(0, 'rgba(255,236,190,.28)'); gl.addColorStop(1, 'rgba(255,236,190,0)');
+        ctx.fillStyle = gl;
+        ctx.fillRect(o.x - o.r * 2.2, o.y - o.r * 2.2, o.r * 4.4, o.r * 4.4);
+        ctx.fillStyle = '#f6e7c1';
+        ctx.beginPath(); ctx.arc(o.x, o.y, o.r, 0, TAU); ctx.fill();
+        ctx.fillStyle = 'rgba(190,170,130,.4)';
+        [[-18, -14, 11], [16, 12, 8], [10, -22, 6], [-20, 18, 6], [24, -4, 5]].forEach(([dx, dy, r]) => { ctx.beginPath(); ctx.arc(o.x + dx, o.y + dy, r, 0, TAU); ctx.fill(); });
+        if (o.state === 'go') {
+          ctx.fillStyle = '#3a2a1a';
+          ctx.fillRect(o.x - 16, o.y - 6, 8, 8); ctx.fillRect(o.x + 8, o.y - 6, 8, 8);
+          ctx.fillRect(o.x - 12, o.y + 16, 24, 5);
+        }
+      }
+    }
+    for (const s of room.saves) {
+      const px = s.tx * T, py = s.ty * T;
+      const active = !s.fake && save.room === room.i && save.x === px + 10 && save.y === (s.ty + 1) * T - PH;
+      ctx.fillStyle = s.revealed ? '#7a1d2a' : '#6b6f7d';
+      ctx.beginPath();
+      ctx.moveTo(px + 5, py + 32); ctx.lineTo(px + 5, py + 13);
+      ctx.arc(px + 16, py + 13, 11, Math.PI, 0);
+      ctx.lineTo(px + 27, py + 32); ctx.closePath(); ctx.fill();
+      ctx.fillStyle = active ? '#7dff9a' : s.revealed ? '#ff3b4e' : '#2f323c';
+      ctx.font = 'bold 8px ui-monospace, monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(s.revealed ? 'LOL' : 'SAVE', px + 16, py + 20);
+      if (active) {
+        ctx.fillStyle = 'rgba(125,255,154,.18)';
+        ctx.beginPath(); ctx.arc(px + 16, py + 18, 20, 0, TAU); ctx.fill();
+      }
+      if (s.revealed) for (const dx of [2, 12, 22]) drawSpike(px + dx - 6, py - 14, '^', 0.5);
+    }
+  }
+
+  function drawBoss(time) {
+    const bo = room.boss;
+    if (!bo) return;
+    for (const w of room.warns) {
+      if (Math.floor(w.t / 5) % 2) { ctx.fillStyle = 'rgba(255,59,78,.55)'; ctx.fillRect(w.x - 10, T, 20, 8); }
+    }
+    for (const c of room.corn) {
+      ctx.fillStyle = '#fff3d6'; ctx.beginPath(); ctx.moveTo(c.x - 9, c.y - 12); ctx.lineTo(c.x + 9, c.y - 12); ctx.lineTo(c.x + 6, c.y - 6); ctx.lineTo(c.x - 6, c.y - 6); ctx.fill();
+      ctx.fillStyle = '#ff8a1f'; ctx.beginPath(); ctx.moveTo(c.x - 6, c.y - 6); ctx.lineTo(c.x + 6, c.y - 6); ctx.lineTo(c.x + 3, c.y + 2); ctx.lineTo(c.x - 3, c.y + 2); ctx.fill();
+      ctx.fillStyle = '#ffd36b'; ctx.beginPath(); ctx.moveTo(c.x - 3, c.y + 2); ctx.lineTo(c.x + 3, c.y + 2); ctx.lineTo(c.x, c.y + 12); ctx.fill();
+    }
+    for (const s of room.seeds) {
+      ctx.fillStyle = '#f3e6c4';
+      ctx.beginPath(); ctx.ellipse(s.x, s.y, 5, 4, Math.atan2(s.vy, s.vx), 0, TAU); ctx.fill();
+    }
+    if (bo.state === 'wait' || bo.state === 'dead') return;
+    const enraged = bo.hp <= bo.max / 2;
+    const bob = bo.state === 'intro' ? Math.sin(time * 10) * 3 : 0;
+    ctx.save();
+    if (bo.flash) ctx.globalAlpha = 0.6;
+    drawPumpkin(bo.x, bo.y + bob, bo.r, time, false);
+    ctx.restore();
+    // crown
+    ctx.fillStyle = '#ffd36b';
+    const cy = bo.y + bob - bo.r * 0.95;
+    ctx.beginPath();
+    ctx.moveTo(bo.x - 24, cy); ctx.lineTo(bo.x - 24, cy - 18); ctx.lineTo(bo.x - 12, cy - 8); ctx.lineTo(bo.x, cy - 22);
+    ctx.lineTo(bo.x + 12, cy - 8); ctx.lineTo(bo.x + 24, cy - 18); ctx.lineTo(bo.x + 24, cy); ctx.closePath(); ctx.fill();
+    // face
+    const glow = enraged ? '#ff3b4e' : '#ffd36b';
+    ctx.fillStyle = glow;
+    const fx = bo.x, fy = bo.y + bob;
+    ctx.beginPath(); ctx.moveTo(fx - 26, fy - 4); ctx.lineTo(fx - 14, fy - 20); ctx.lineTo(fx - 6, fy - 4); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(fx + 6, fy - 4); ctx.lineTo(fx + 14, fy - 20); ctx.lineTo(fx + 26, fy - 4); ctx.fill();
+    ctx.beginPath();
+    ctx.moveTo(fx - 28, fy + 8);
+    for (let i = 0; i <= 8; i++) ctx.lineTo(fx - 28 + i * 7, fy + 8 + (i % 2 ? 8 : 0));
+    ctx.lineTo(fx + 24, fy + 22); ctx.lineTo(fx - 24, fy + 22); ctx.closePath(); ctx.fill();
+    if (bo.flash) { ctx.fillStyle = 'rgba(255,255,255,.5)'; ctx.beginPath(); ctx.arc(bo.x, bo.y + bob, bo.r, 0, TAU); ctx.fill(); }
+    // health bar
+    ctx.fillStyle = 'rgba(0,0,0,.6)'; ctx.fillRect(200, 40, 400, 12);
+    ctx.fillStyle = enraged ? '#ff3b4e' : '#ff8a1f'; ctx.fillRect(202, 42, 396 * Math.max(0, bo.hp) / bo.max, 8);
+    ctx.fillStyle = '#ece2f6'; ctx.font = 'bold 13px ui-monospace, monospace'; ctx.textAlign = 'center';
+    ctx.fillText('THE PUMPKIN KING', 400, 34);
+  }
+
+  function drawPlayer(time) {
+    if (!p || state === 'dead' || state === 'won') return;
+    const x = Math.round(p.x), y = Math.round(p.y), f = p.face;
+    const step = p.onGround && p.vx ? Math.floor(p.anim) % 2 : 0;
+    // legs
+    ctx.fillStyle = '#1b1526';
+    ctx.fillRect(x + 2, y + 17, 3, 4 - step);
+    ctx.fillRect(x + 6, y + 17, 3, 3 + step);
+    // robe
+    ctx.fillStyle = '#5b2a86';
+    ctx.fillRect(x + 1, y + 10, 9, 8);
+    // cape flutter
+    ctx.fillStyle = '#ff8a1f';
+    ctx.fillRect(f > 0 ? x - 2 : x + 9, y + 10, 4, 6 + (p.vx ? (Math.floor(time * 12) % 2) : 0));
+    // face
+    ctx.fillStyle = '#f2d9c4';
+    ctx.fillRect(x + 2, y + 4, 7, 6);
+    ctx.fillStyle = '#120c18';
+    ctx.fillRect(f > 0 ? x + 6 : x + 3, y + 6, 2, 2);
+    // witch hat
+    ctx.fillStyle = '#2b1a3d';
+    ctx.fillRect(x - 1, y + 3, 13, 2);
+    ctx.beginPath(); ctx.moveTo(x + 1, y + 3); ctx.lineTo(x + 5.5 - f * 3, y - 7); ctx.lineTo(x + 10, y + 3); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#ff8a1f';
+    ctx.fillRect(x + 2, y + 1, 7, 2);
+    // raised arm when aiming up
+    if (keys.up) {
+      ctx.fillStyle = '#f2d9c4';
+      if (p.vx) ctx.fillRect(f > 0 ? x + 9 : x, y + 3, 2, 3), ctx.fillRect(f > 0 ? x + 11 : x - 2, y + 1, 2, 2);
+      else ctx.fillRect(x + 4, y - 3, 2, 6);
+    }
+  }
+
+  function drawBullets() {
+    for (const b of room.bullets) {
+      ctx.save();
+      ctx.translate(b.x, b.y);
+      ctx.rotate(Math.atan2(b.vy, b.vx));
+      ctx.fillStyle = '#ffd36b'; ctx.fillRect(-3, -2, 6, 4);
+      ctx.fillStyle = '#ff8a1f'; ctx.fillRect(1, -2, 2, 4);
+      ctx.restore();
+    }
+  }
+
+  function draw(time) {
+    drawBackground(time);
+    drawObjects(time);
+    drawTiles();
+    drawBoss(time);
+    if (room.trophy) {
+      const ty = room.trophy.y + Math.sin(time * 3) * 4;
+      ctx.fillStyle = 'rgba(255,211,107,.25)'; ctx.beginPath(); ctx.arc(room.trophy.x, ty, 26, 0, TAU); ctx.fill();
+      ctx.fillStyle = '#ffd36b';
+      ctx.beginPath(); ctx.ellipse(room.trophy.x, ty, 13, 9, 0, 0, TAU); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(room.trophy.x - 12, ty); ctx.lineTo(room.trophy.x - 22, ty - 8); ctx.lineTo(room.trophy.x - 22, ty + 8); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(room.trophy.x + 12, ty); ctx.lineTo(room.trophy.x + 22, ty - 8); ctx.lineTo(room.trophy.x + 22, ty + 8); ctx.fill();
+    }
+    drawBullets();
+    drawPlayer(time);
+    for (const q of parts) {
+      ctx.globalAlpha = Math.min(1, q.life / 30);
+      ctx.fillStyle = q.c;
+      ctx.fillRect(q.x, q.y, q.s, q.s);
+    }
+    ctx.globalAlpha = 1;
+    if (room.msg) {
+      ctx.fillStyle = room.msg.text === 'SAVED' ? '#7dff9a' : '#ffd36b';
+      ctx.font = `bold ${room.msg.text.length > 12 ? 22 : 14}px ui-monospace, monospace`;
+      ctx.textAlign = 'center';
+      ctx.fillText(room.msg.text, room.msg.x, room.msg.y);
+    }
+  }
+
+  function hud() {
+    $stats.textContent = state === 'title' ? '' : `Deaths: ${deaths}   Time: ${fmtTime(frames)}`;
+  }
+
+  /* ================= loop ================= */
+  let acc = 0, last = performance.now();
+  function frame(now) {
+    let dt = (now - last) / 1000;
+    last = now;
+    if (dt > 0.25) dt = 0.25;
+    if (state === 'play' || state === 'dead' || state === 'won') {
+      acc += dt;
+      while (acc >= STEP) { step(); acc -= STEP; }
+    } else {
+      acc = 0;
+    }
+    draw(now / 1000);
+    hud();
+    requestAnimationFrame(frame);
+  }
+
+  resize();
+  titleScreen();
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
