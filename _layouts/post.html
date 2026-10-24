@@ -1,10 +1,12 @@
 {% include head.html %}
 {% include header.html %}
-<section id="post">
+<section id="post" class="h-entry">
     <div class="wrap article-grid">
-        <h2>{{ page.title }}</h2>
+        <h2 class="p-name">{{ page.title }}</h2>
         <small class="meta">{{ page.author }} | {{ page.date | date_to_long_string }} | {{ page.catagories }}</small>
-        {{ content }}
+        <div class="e-content">
+            {{ content }}
+        </div>
     </div>
 </section>
 {% include footer.html %}
